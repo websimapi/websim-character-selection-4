@@ -112,10 +112,15 @@ function updateMobileSlotPicker() {
 }
 
 function canControlSlot(slotIndex) {
-    // Host can control any slot; clients only their assigned slot.
+    // Host can only control their slot (index 0).
+    // Clients can only control their assigned slot.
     const slotData = playerSlots[slotIndex];
-    if (isHost) return true;
-    return slotData.occupied && slotData.playerId === peerId;
+
+    if (isHost) {
+        return slotIndex === 0;
+    } else {
+        return slotData.occupied && slotData.playerId === peerId;
+    }
 }
 
 // Set up the start overlay

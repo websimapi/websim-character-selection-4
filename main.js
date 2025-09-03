@@ -221,10 +221,7 @@ function updateCharacterSlotsUI() {
         const currentGender = slot.dataset.archerGender;
 
         if (playerSlot.occupied) {
-            // Do not remove 'empty' class if an animation is in progress
-            if (!slot.dataset.animatingOut) {
-                slot.classList.remove('empty');
-            }
+            slot.classList.remove('empty');
             
             let characterChanged = playerSlot.characterIndex !== currentCharacterIndex;
             let genderChanged = false;
@@ -253,10 +250,7 @@ function updateCharacterSlotsUI() {
             }
 
         } else {
-            // Do not add 'empty' class if an animation is in progress
-            if (!slot.dataset.animatingOut) {
-                slot.classList.add('empty');
-            }
+            slot.classList.add('empty');
         }
     });
     if (typeof renderPlayersStrip === 'function') renderPlayersStrip();
@@ -281,40 +275,10 @@ function hostSwitchToSlot(targetIndex) {
     if (!isHost) return;
     const target = playerSlots[targetIndex];
     if (!target || target.occupied) return;
-    const prevIndex = mySlotIndex;
     const current = playerSlots[mySlotIndex];
-    
-    // Determine animation direction
-    const direction = targetIndex > prevIndex ? 'right' : 'left';
-    const outDirection = direction === 'right' ? 'slide-out-to-right' : 'slide-out-to-left';
-    
-    // Animate character out of the old slot
-    const prevEl = document.querySelector(`.character-slot[data-player="${prevIndex + 1}"]`);
-    if (prevEl) {
-        const img = prevEl.querySelector('.character-image');
-        if (img) {
-            img.classList.add(outDirection);
-            prevEl.dataset.animatingOut = 'true';
-            setTimeout(() => {
-                img.remove();
-                prevEl.classList.add('empty');
-                delete prevEl.dataset.animatingOut;
-            }, ANIMATION_DURATION);
-        }
-    }
-
-    // Update state
     target.occupied = true; target.playerId = 'host'; target.characterIndex = current.characterIndex; target.gender = current.gender;
     current.occupied = false; current.playerId = null;
     mySlotIndex = targetIndex;
-    
-    // Animate character into new slot
-    const targetEl = document.querySelector(`.character-slot[data-player="${targetIndex + 1}"]`);
-    if (targetEl) {
-        updateCharacterSlot(targetEl, characters[target.characterIndex], direction);
-    }
-
-    // Update everyone
     broadcastToClients({ type: 'player_slots_update', playerSlots });
     updateCharacterSlotsUI();
     applyMobileSingleSlotMode();

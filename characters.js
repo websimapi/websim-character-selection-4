@@ -22,8 +22,6 @@ const characterImageCache = {};
 // Update a character slot with new character data
 function updateCharacterSlot(slot, character, direction) {
     const imageWrapper = slot.querySelector('.character-image-wrapper');
-    const wasEmpty = slot.classList.contains('empty');
-
     // Cleanup: ensure only the topmost image remains before we animate
     const imgs = imageWrapper.querySelectorAll('.character-image');
     if (imgs.length > 1) {
@@ -85,14 +83,15 @@ function updateCharacterSlot(slot, character, direction) {
     }
 
     // Animate old image out (guard if none)
-    if (wasEmpty) {
-        // Animate the skull pseudo-element out
-        if (direction !== 'fade') {
-            imageWrapper.classList.add(direction === 'right' ? 'slide-out-to-left' : 'slide-out-to-right');
-        }
-        slot.classList.remove('empty');
-    } else if (oldImage) {
-        if (direction === 'fade') {
+    if (oldImage) {
+        const finePointer = window.matchMedia('(pointer: fine)').matches;
+        if (finePointer) {
+            oldImage.style.visibility = 'hidden';
+            const skull = document.createElement('img');
+            skull.src = '/skull.png'; skull.alt = '';
+            skull.className = 'skull-placeholder ' + (direction === 'right' ? 'slide-out-to-left' : 'slide-out-to-right');
+            imageWrapper.appendChild(skull);
+        } else if (direction === 'fade') {
             oldImage.style.transition = `opacity ${ANIMATION_DURATION}ms ease-in-out`;
             oldImage.style.opacity = '0';
             newImage.style.transition = `opacity ${ANIMATION_DURATION}ms ease-in-out`;
@@ -114,12 +113,9 @@ function updateCharacterSlot(slot, character, direction) {
         if (oldImage && oldImage.dataset.blobUrl) {
             URL.revokeObjectURL(oldImage.dataset.blobUrl);
         }
+        const skullEl = imageWrapper.querySelector('.skull-placeholder');
+        if (skullEl) skullEl.remove();
         if (oldImage) oldImage.remove();
-        
-        if (wasEmpty) {
-            imageWrapper.classList.remove('slide-out-to-left', 'slide-out-to-right');
-        }
-
         newImage.classList.remove('slide-in-from-left', 'slide-in-from-right');
         newImage.style.opacity = '';
         newImage.style.transition = '';
