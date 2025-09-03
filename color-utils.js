@@ -12,21 +12,41 @@ function isBluish(h, s, l, r, g, b) {
 }
 
 function isYellowish(h, s, l, r, g, b, y, imageHeight) {
-    const isUpperBody = y < imageHeight * 0.6;
+    // Skin Tone Guard: Exclude pixels that fall within typical skin tone ranges.
+    // This is refined to be more specific to avoid accidentally filtering out gold/yellow tones.
+    const isUpperBody = y < imageHeight * 0.65;
     if (isUpperBody) {
-        const isSkinTone = (h >= 10 && h <= 55) && (s >= 0.22 && s <= 0.8) && (l >= 0.28 && l <= 0.92);
-        if (isSkinTone) return false;
+        // More specific skin tone check: skin is typically in the orange hue range,
+        // with moderate saturation and brightness. Very bright or very saturated pixels
+        // are less likely to be skin. Gold can be bright and saturated.
+        const isSkinHue = h >= 18 && h <= 48;
+        const isSkinSat = s >= 0.20 && s <= 0.65;
+        const isSkinLight = l >= 0.35 && l <= 0.85;
+
+        // A check for pale, less saturated skin.
+        const isPaleSkin = isSkinHue && s < 0.30 && l > 0.65;
+        
+        if ((isSkinHue && isSkinSat && isSkinLight) && !isPaleSkin) {
+            // Check for color dominance. Skin has r > g > b.
+            // Gold/yellow has r ~= g > b. If green is much lower than red, it's more likely skin.
+            if (r > g && (r - g) > 25) {
+                return false;
+            }
+        }
     }
-    // Explicitly exclude near-white/grey (beard, highlights)
-    if (s < 0.15 && l > 0.78) return false;
 
-    const hueOK = (h >= 42 && h <= 75); // tighter golden band
+    // Hue check: Target yellows and oranges.
+    const hueOK = (h >= 35 && h <= 90);
+    // Chroma check: Ensure yellow/gold is dominant. Yellow is high R and G, low B.
     const yellowDominance = (r + g) / 2 - b;
-    const chromaOK = yellowDominance > 28 && r > 70 && g > 70; // stronger dominance
-    const satOK = s > 0.22;
-    const lightOK = l > 0.18 && l < 0.85;
+    const chromaOK = yellowDominance > 25;
+    // Saturation & Lightness checks: Avoid greys, blacks, whites.
+    const satOK = s > 0.25;
+    const lightOK = l > 0.20 && l < 0.98;
+    
+    // A specific guard for dark, less saturated gold/brass colors.
+    const darkYellowGuard = (g > b && r > b) && (g > 60 && r > 60) && l < 0.55 && s > 0.2;
 
-    const darkYellowGuard = (g > b && r > b) && (g > 50 && r > 50) && l < 0.45 && s > 0.22;
     return (hueOK && satOK && lightOK && chromaOK) || darkYellowGuard;
 }
 
