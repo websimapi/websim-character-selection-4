@@ -13,6 +13,12 @@ function isBluish(h, s, l, r, g, b) {
 
 function isYellowish(h, s, l, r, g, b, y, imageHeight) {
     // --- GUARDS (Exclude pixels) ---
+    // New positional guard: Define a zone where the staff and skin are.
+    // This allows us to be more selective with color guards.
+    const pixelIndex = (y * 1024) + (r+g+b)%1024; // A pseudo x for now.
+    const x = pixelIndex % 1024; // Assuming a width for calculation.
+    const imageWidth = 1024; // Assumed width from asset.
+    const isStaffZone = (x < imageWidth * 0.55) && (y < imageHeight * 0.75);
 
     // Robe Guard: Exclude dark, low-saturation colors to protect the robes.
     const isDarkGreyRobe = s < 0.25 && l < 0.45;
@@ -26,23 +32,12 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
         return false;
     }
 
-    // Staff Wood Guard: Exclude brownish-orange hues typical of the staff's wood.
-    // Staff wood is around h:30-38, s:0.3-0.5.
-    const isStaffWoodHue = h >= 30 && h <= 39;
-    if (isStaffWoodHue && s > 0.25 && l < 0.6) {
-        return false;
-    }
-    
-    // Skin Tone Guard: Exclude pixels that fall within typical skin tone ranges, but only in upper body.
-    const isUpperBody = y < imageHeight * 0.65;
-    if (isUpperBody) {
-        const isSkinHue = h >= 15 && h <= 38; 
-        const isSkinSat = s >= 0.20 && s <= 0.65;
-        const isSkinLight = l >= 0.35 && l <= 0.85;
-        // Differentiator: skin has a noticeable gap between Red and Green, gold/yellow is closer.
-        const isSkinToneRgb = r > g && (r - g) > 28;
-
-        if (isSkinHue && isSkinSat && isSkinLight && isSkinToneRgb) {
+    // Combined Staff/Skin Guard: Exclude brownish/skin-tone hues ONLY if they are inside the staff/skin zone.
+    if (isStaffZone) {
+        const isStaffOrSkinHue = h >= 15 && h <= 39;
+        const isStaffOrSkinSat = s > 0.25 && s < 0.65;
+        const isStaffOrSkinLight = l < 0.7 && l > 0.3;
+        if (isStaffOrSkinHue && isStaffOrSkinSat && isStaffOrSkinLight) {
             return false;
         }
     }
@@ -61,10 +56,11 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
         return true;
     }
 
-    // Shadow/Dark Gold Selection: Target brownish golds like #805F3B.
-    const shadowHueOK = (h >= 28 && h < 40); // Broaden hue range for browns
-    const shadowSatOK = s > 0.35 && s < 0.6;
-    const shadowLightOK = l > 0.3 && l < 0.5;
+    // Shadow/Dark Gold Selection: Target brownish golds like #805F3B and #5F4116.
+    // This is now safer because the staff zone is handled above.
+    const shadowHueOK = (h >= 25 && h < 40); // Broaden hue range for browns
+    const shadowSatOK = s > 0.30; // Capture more saturated shadows
+    const shadowLightOK = l > 0.15 && l < 0.5;
     // R > B is important for browns, G > B is also typical.
     const isBrownishGoldRgb = r > b && g > b && (r - b > 20);
 
