@@ -65,7 +65,10 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
     // Guard for darker, less saturated gold/brass colors found on the trim.
     const darkYellowGuard = (g > b && r > b) && l < 0.55 && s > 0.25 && hueOK;
 
-    return (hueOK && satOK && lightOK && chromaOK) || darkYellowGuard;
+    // Special case for brownish-yellow trim like #805F3B (h:31, s:0.37, l:0.36)
+    const isBrownishYellowTrim = (h >= 28 && h <= 35) && (s >= 0.3 && s <= 0.5) && (l >= 0.3 && l <= 0.45);
+
+    return (hueOK && satOK && lightOK && chromaOK) || darkYellowGuard || isBrownishYellowTrim;
 }
 
 function isReddish(h, s, l, r, g, b, y, imageHeight) {

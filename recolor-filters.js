@@ -205,6 +205,12 @@ function selectiveRecolorWizard(img, targetHue, returnBlob = false) {
                     const r = p[i], g = p[i+1], b = p[i+2], a = p[i+3];
                     if (a < 5) continue;
                     
+                    // Make near-black background transparent
+                    if (r < 20 && g < 20 && b < 20 && a > 200) {
+                        p[i+3] = 0; // Set alpha to transparent
+                        continue;
+                    }
+
                     const pixelIndex = i / 4;
                     const y = Math.floor(pixelIndex / c.width);
 
