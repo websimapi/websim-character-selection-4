@@ -151,6 +151,7 @@
     display: none;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
+    cursor: var(--relic-cursor);
 }
 
 .host-qr-mini.visible {
@@ -252,4 +253,3 @@
     cursor: var(--relic-cursor);
     z-index: 1;
 }
-

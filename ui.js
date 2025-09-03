@@ -125,6 +125,14 @@ function initializeStartOverlay() {
     closeQrBtn.addEventListener('click', () => {
         qrOverlay.classList.add('hidden');
     });
+
+    // Add listener for mini QR code to show fullscreen overlay
+    const hostQrDisplay = document.getElementById('host-qr-display');
+    hostQrDisplay.addEventListener('click', () => {
+        if (isHost) {
+            qrOverlay.classList.remove('hidden');
+        }
+    });
 }
 
 function startHosting() {
@@ -137,10 +145,6 @@ function startHosting() {
     // Show mini QR code in top right
     document.getElementById('host-qr-display').classList.add('visible');
     
-    // Show fullscreen QR code overlay
-    const qrOverlay = document.getElementById('qr-code-overlay');
-    qrOverlay.classList.remove('hidden');
-
     // Initialize audio
     initializeAudio();
     
