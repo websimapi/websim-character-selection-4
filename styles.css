@@ -559,6 +559,13 @@ body {
         font-size: 1rem;
     }
 
+    .character-name-container {
+        width: 100%;
+        max-width: none;
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
     .player-indicator {
         font-size: 0.7rem;
     }
