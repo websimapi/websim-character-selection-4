@@ -111,6 +111,10 @@ function startHosting() {
     
     console.log('Started Scan to Play mode as host with ID:', peerId);
     mySlotIndex = 0;
+    
+    // Update the UI to show empty slots correctly
+    updateCharacterSlotsUI();
+
     applyMobileSingleSlotMode();
 }
 
