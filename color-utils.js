@@ -11,13 +11,13 @@ function isBluish(h, s, l, r, g, b) {
     return ((hueOK && satOK && lightOK) || chromaOK || darkBlueGuard);
 }
 
-function isYellowish(h, s, l, r, g, b, x, imageWidth, y, imageHeight) {
+function isYellowish(h, s, l, r, g, b, y, imageHeight) {
+    // --- GUARDS (Exclude pixels) ---
+
     // Robe Guard: Exclude dark, low-saturation colors to protect the robes.
-    if (s < 0.25 && l < 0.45) return false;
-    // Also check for greyish colors by component difference.
-    const maxComp = Math.max(r, g, b);
-    const minComp = Math.min(r, g, b);
-    if ((maxComp - minComp) < 25 && l < 0.5) {
+    const isDarkGreyRobe = s < 0.25 && l < 0.45;
+    const isGreyish = (Math.max(r, g, b) - Math.min(r, g, b)) < 25 && l < 0.5;
+    if (isDarkGreyRobe || isGreyish) {
         return false;
     }
     
@@ -33,41 +33,46 @@ function isYellowish(h, s, l, r, g, b, x, imageWidth, y, imageHeight) {
         return false;
     }
     
-    // Skin Tone Guard: Exclude pixels that fall within typical skin tone ranges.
+    // Skin Tone Guard: Exclude pixels that fall within typical skin tone ranges, but only in upper body.
     const isUpperBody = y < imageHeight * 0.65;
     if (isUpperBody) {
-        // Skin is typically in the orange hue range.
         const isSkinHue = h >= 15 && h <= 38; 
         const isSkinSat = s >= 0.20 && s <= 0.65;
         const isSkinLight = l >= 0.35 && l <= 0.85;
+        // Differentiator: skin has a noticeable gap between Red and Green, gold/yellow is closer.
+        const isSkinToneRgb = r > g && (r - g) > 28;
 
-        if (isSkinHue && isSkinSat && isSkinLight) {
-            // A key differentiator: skin has a noticeable gap between Red and Green components,
-            // whereas gold/yellow has Red and Green components that are much closer.
-            if (r > g && (r - g) > 28) {
-                return false;
-            }
+        if (isSkinHue && isSkinSat && isSkinLight && isSkinToneRgb) {
+            return false;
         }
     }
 
-    // Main Selection Logic (gold/yellow)
-    const hueOK = (h >= 40 && h <= 55);
-    // Chroma check: Ensure yellow/gold is dominant. Yellow is high R and G, low B.
-    const yellowDominance = (r + g) / 2 - b;
-    const chromaOK = yellowDominance > 30; 
-    // Saturation & Lightness checks: Avoid greys, blacks, whites.
-    const satOK = s > 0.28; 
-    const lightOK = l > 0.25 && l < 0.85;
+    // --- SELECTION LOGIC (Include pixels) ---
     
-    // Guard for darker, less saturated gold/brass colors found on the trim.
-    const darkYellowGuard = (g > b && r > b) && l < 0.55 && s > 0.25 && hueOK;
+    // Main Selection: Target the vibrant gold/yellow range.
+    const mainHueOK = (h >= 40 && h <= 55);
+    const mainSatOK = s > 0.28;
+    const mainLightOK = l > 0.25 && l < 0.85;
+    // Chroma check: Ensure yellow/gold is dominant (high R and G, low B).
+    const yellowDominance = (r + g) / 2 - b;
+    const mainChromaOK = yellowDominance > 30;
+    
+    if (mainHueOK && mainSatOK && mainLightOK && mainChromaOK) {
+        return true;
+    }
 
-    // Accept brown-gold wardrobe tones (e.g., #805F3B, #9C8345, #AD8A47) but only near center to avoid staff
-    const isCenter = x > imageWidth * 0.22 && x < imageWidth * 0.78;
-    const brownGoldHue = h >= 28 && h <= 45;
-    const brownGoldOK = isCenter && brownGoldHue && s >= 0.22 && s <= 0.65 && l >= 0.28 && l <= 0.62 && (r > b && g > b);
+    // Shadow/Dark Gold Selection: Target brownish golds like #805F3B.
+    const shadowHueOK = (h >= 28 && h < 40); // Broaden hue range for browns
+    const shadowSatOK = s > 0.35 && s < 0.6;
+    const shadowLightOK = l > 0.3 && l < 0.5;
+    // R > B is important for browns, G > B is also typical.
+    const isBrownishGoldRgb = r > b && g > b && (r - b > 20);
 
-    return (hueOK && satOK && lightOK && chromaOK) || darkYellowGuard || brownGoldOK;
+    if(shadowHueOK && shadowSatOK && shadowLightOK && isBrownishGoldRgb) {
+        return true;
+    }
+
+    return false;
 }
 
 function isReddish(h, s, l, r, g, b, y, imageHeight) {
