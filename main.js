@@ -38,12 +38,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize networking
     initializePeerJS();
     
-    // Initialize UI for slot switching states
-    updateCharacterSlotsUI();
-
     // Now initialize the rest of the app
     initializeCharacterSelection();
     initializeStartOverlay();
+
+    // Initialize UI for slot switching states
+    updateCharacterSlotsUI();
 });
 
 function initializePeerJS() {
