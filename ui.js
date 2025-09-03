@@ -7,14 +7,6 @@ function initializeCharacterSelection() {
         const slotData = playerSlots[index];
         if (!slotData.occupied) {
             slot.classList.add('empty');
-            // ensure skull overlay exists for empty slots on load
-            if (!slot.querySelector('.skull-overlay')) {
-                const wrap = slot.querySelector('.character-image-wrapper');
-                const skull = document.createElement('div');
-                skull.className = 'skull-overlay';
-                skull.innerHTML = '<img src="/skull.png" alt="Empty Slot">';
-                wrap.appendChild(skull);
-            }
         }
 
         // Initial gender setup for archer

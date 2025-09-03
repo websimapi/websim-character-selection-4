@@ -271,6 +271,7 @@
 }
 
 .character-slot.empty .character-image-wrapper {
+    background: url('/skull.png') center/contain no-repeat;
     opacity: 0.3;
 }
 
@@ -282,11 +283,7 @@
     opacity: 0.5;
 }
 
-.skull-overlay {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    pointer-events: none; z-index: 0;
-    opacity: 0.3;
+.skull-flyout {
+    position: absolute; inset: 0; object-fit: contain; object-position: center;
+    width: 100%; height: 100%; opacity: 0.35; pointer-events: none;
 }
-
-.skull-overlay img { width: 70%; height: 70%; object-fit: contain; }

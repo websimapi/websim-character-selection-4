@@ -128,6 +128,17 @@ function updateCharacterSlot(slot, character, direction) {
         nameText.textContent = character.name;
         nameText.classList.remove('fade-out');
     }, ANIMATION_DURATION / 2);
+
+    const wasEmpty = slot.classList.contains('empty');
+    if (wasEmpty) {
+        slot.classList.remove('empty');
+        if (oldImage) { if (oldImage.dataset.blobUrl) URL.revokeObjectURL(oldImage.dataset.blobUrl); oldImage.remove(); }
+        const skull = document.createElement('img');
+        skull.src = '/skull.png'; skull.className = 'skull-flyout ' + (direction === 'right' ? 'slide-out-to-left' : 'slide-out-to-right');
+        imageWrapper.appendChild(skull);
+        setTimeout(()=> skull.remove(), ANIMATION_DURATION);
+        oldImage = null;
+    }
 }
 
 function preprocessCharacters() {
