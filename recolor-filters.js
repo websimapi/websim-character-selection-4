@@ -1,4 +1,6 @@
 // Character-specific recoloring logic
+import Color from 'color';
+
 
 function selectiveRecolorWarrior(img, targetHue, returnBlob = false) {
     const shift = ((targetHue - 240) + 360) % 360;
@@ -215,15 +217,15 @@ function selectiveRecolorWizard(img, targetHue, returnBlob = false) {
                         
                         let rgb;
                         if (targetHue === 0) { // Darker Red
-                            h = 0; // Force pure red hue to avoid purple tint
-                            s = Math.min(1, s * 1.25); // Boost saturation for a richer red
-                            l = Math.max(0, l * 0.85); // Make it darker
+                            // Use color library for more accurate manipulation
+                            let color = Color({r,g,b});
                             
-                            rgb = hslToRgb(h, s, l);
+                            // Shift hue to red, increase saturation, and adjust lightness
+                            // to maintain detail from the original pixel.
+                            color = color.hue(0).saturate(0.5).lightness(color.lightness() * 0.85);
+
+                            rgb = color.rgb().object();
                             
-                            // Reduce green and blue components to ensure a deep, pure red
-                            rgb.g = Math.max(0, rgb.g - 15);
-                            rgb.b = Math.max(0, rgb.b - 15);
                         } else if (targetHue === 60) { // Special handling for yellow to make it pop
                             h = 50; // A rich golden hue
                             s = Math.min(1, s * 1.3); // Boost saturation

@@ -28,6 +28,13 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
         return false;
     }
 
+    // Staff Guard: Exclude brownish colors that might be on the staff.
+    // Brown hues are in the orange/yellow range, but less saturated.
+    // The staff's brown is around hue 25-35. The gold trim is hue 45-55.
+    if (h > 20 && h < 40 && s < 0.6) {
+        return false;
+    }
+
     // Skin Tone Guard: Exclude pixels that fall within typical skin tone ranges.
     // This is refined to be more specific to avoid accidentally filtering out gold/yellow tones.
     const isUpperBody = y < imageHeight * 0.65;
@@ -49,13 +56,13 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
     }
 
     // Hue check: Target yellows and golds, avoiding greenish yellows.
-    const hueOK = (h >= 40 && h <= 70);
+    const hueOK = (h >= 42 && h <= 70);
     // Chroma check: Ensure yellow/gold is dominant. Yellow is high R and G, low B.
     const yellowDominance = (r + g) / 2 - b;
-    const chromaOK = yellowDominance > 25; // Lowered threshold slightly for colors like #AA9360
+    const chromaOK = yellowDominance > 25; 
     // Saturation & Lightness checks: Avoid greys, blacks, whites.
-    const satOK = s > 0.25; // Lowered from 0.30 to include #AA9360 (s=0.29)
-    const lightOK = l > 0.20 && l < 0.90; // Raised upper bound to catch brighter golds
+    const satOK = s > 0.25; 
+    const lightOK = l > 0.20 && l < 0.90; 
     
     // A specific guard for dark, less saturated gold/brass colors.
     const darkYellowGuard = (g > b && r > b) && (g > 60 && r > 60) && l < 0.55 && s > 0.20;
