@@ -217,6 +217,8 @@ body {
     display: inline-block;
     flex-grow: 1;
     white-space: nowrap;
+    min-width: 0; /* Add this to allow flex shrinking */
+    text-align: center; /* Add this for centering */
 }
 
 .character-stats .stat-label.fade-out {
