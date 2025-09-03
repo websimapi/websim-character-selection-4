@@ -275,11 +275,23 @@ function hostSwitchToSlot(targetIndex) {
     if (!isHost) return;
     const target = playerSlots[targetIndex];
     if (!target || target.occupied) return;
+    const prevIndex = mySlotIndex;
     const current = playerSlots[mySlotIndex];
     target.occupied = true; target.playerId = 'host'; target.characterIndex = current.characterIndex; target.gender = current.gender;
     current.occupied = false; current.playerId = null;
     mySlotIndex = targetIndex;
     broadcastToClients({ type: 'player_slots_update', playerSlots });
     updateCharacterSlotsUI();
+    const prevEl = document.querySelector(`.character-slot[data-player="${prevIndex + 1}"]`);
+    if (prevEl) {
+        prevEl.classList.add('empty');
+        const wrap = prevEl.querySelector('.character-image-wrapper');
+        wrap && wrap.querySelectorAll('.character-image').forEach(img => { if (img.dataset.blobUrl) URL.revokeObjectURL(img.dataset.blobUrl); img.remove(); });
+    }
+    const targetEl = document.querySelector(`.character-slot[data-player="${targetIndex + 1}"]`);
+    if (targetEl) {
+        targetEl.classList.remove('empty');
+        updateCharacterSlot(targetEl, characters[target.characterIndex], 'right');
+    }
     applyMobileSingleSlotMode();
 }
