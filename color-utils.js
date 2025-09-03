@@ -23,6 +23,11 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
         return false;
     }
     
+    // Staff Glow Guard: Exclude very bright, near-white colors.
+    if (l > 0.85 && s < 0.4) {
+        return false;
+    }
+
     // Skin Tone Guard: Exclude pixels that fall within typical skin tone ranges.
     // This is refined to be more specific to avoid accidentally filtering out gold/yellow tones.
     const isUpperBody = y < imageHeight * 0.65;
@@ -30,14 +35,11 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
         // More specific skin tone check: skin is typically in the orange hue range,
         // with moderate saturation and brightness. Very bright or very saturated pixels
         // are less likely to be skin. Gold can be bright and saturated.
-        const isSkinHue = h >= 18 && h <= 48;
+        const isSkinHue = h >= 18 && h <= 45; // Broadened slightly
         const isSkinSat = s >= 0.20 && s <= 0.65;
         const isSkinLight = l >= 0.35 && l <= 0.85;
 
-        // A check for pale, less saturated skin.
-        const isPaleSkin = isSkinHue && s < 0.30 && l > 0.65;
-        
-        if ((isSkinHue && isSkinSat && isSkinLight) && !isPaleSkin) {
+        if (isSkinHue && isSkinSat && isSkinLight) {
             // Check for color dominance. Skin has r > g > b.
             // Gold/yellow has r ~= g > b. If green is much lower than red, it's more likely skin.
             if (r > g && (r - g) > 25) {
@@ -46,17 +48,17 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
         }
     }
 
-    // Hue check: Target yellows and oranges.
-    const hueOK = (h >= 35 && h <= 90);
+    // Hue check: Target yellows and golds, avoiding greenish yellows.
+    const hueOK = (h >= 40 && h <= 70);
     // Chroma check: Ensure yellow/gold is dominant. Yellow is high R and G, low B.
     const yellowDominance = (r + g) / 2 - b;
-    const chromaOK = yellowDominance > 30; // Increased threshold for more selective yellow
+    const chromaOK = yellowDominance > 25; // Lowered threshold slightly for colors like #AA9360
     // Saturation & Lightness checks: Avoid greys, blacks, whites.
-    const satOK = s > 0.30; // Increased threshold
-    const lightOK = l > 0.20 && l < 0.98;
+    const satOK = s > 0.25; // Lowered from 0.30 to include #AA9360 (s=0.29)
+    const lightOK = l > 0.20 && l < 0.90; // Raised upper bound to catch brighter golds
     
     // A specific guard for dark, less saturated gold/brass colors.
-    const darkYellowGuard = (g > b && r > b) && (g > 60 && r > 60) && l < 0.55 && s > 0.25;
+    const darkYellowGuard = (g > b && r > b) && (g > 60 && r > 60) && l < 0.55 && s > 0.20;
 
     return (hueOK && satOK && lightOK && chromaOK) || darkYellowGuard;
 }
