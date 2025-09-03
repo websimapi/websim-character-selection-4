@@ -215,15 +215,16 @@ function selectiveRecolorWizard(img, targetHue, returnBlob = false) {
                         
                         let rgb;
                         if (targetHue === 0) { // Darker Red
-                            h = 0; // Force pure red hue to avoid purple tint
-                            s = Math.min(1, s * 1.25); // Boost saturation for a richer red
-                            l = Math.max(0, l * 0.85); // Make it darker
+                            h = 1; // Pure red hue
+                            s = Math.min(1, s * 1.3); // Boost saturation
+                            l = Math.max(0, l * 0.9);  // Darken slightly
                             
                             rgb = hslToRgb(h, s, l);
                             
-                            // Reduce green and blue components to ensure a deep, pure red
-                            rgb.g = Math.max(0, rgb.g - 15);
-                            rgb.b = Math.max(0, rgb.b - 15);
+                            // To make the red richer, we ensure it's dominant and other components are reduced.
+                            rgb.r = Math.min(255, rgb.r + 10);
+                            rgb.g = Math.max(0, rgb.g - 20);
+                            rgb.b = Math.max(0, rgb.b - 20);
                         } else if (targetHue === 60) { // Special handling for yellow to make it pop
                             h = 50; // A rich golden hue
                             s = Math.min(1, s * 1.3); // Boost saturation

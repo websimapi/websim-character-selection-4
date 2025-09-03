@@ -23,8 +23,8 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
         return false;
     }
     
-    // Staff Glow Guard: Exclude very bright, near-white colors.
-    if (l > 0.85 && s < 0.4) {
+    // Staff Glow Guard: Exclude very bright, near-white colors. This is more aggressive to protect the staff.
+    if (l > 0.85 || (l > 0.75 && s < 0.5)) {
         return false;
     }
 
