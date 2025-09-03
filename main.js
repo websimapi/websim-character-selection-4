@@ -260,6 +260,15 @@ function updateCharacterSlotsUI() {
                 skull.innerHTML = '<img src="/skull.png" alt="Empty Slot">';
                 wrap.appendChild(skull);
             }
+            
+            // Add "waiting for player" text if it doesn't exist
+            const statsContainer = slot.querySelector('.character-stats');
+            if (statsContainer && !statsContainer.querySelector('.waiting-for-player')) {
+                const waitingText = document.createElement('div');
+                waitingText.className = 'waiting-for-player';
+                waitingText.innerHTML = 'Waiting for a player to join<span class="ellipsis"></span>';
+                statsContainer.appendChild(waitingText);
+            }
         }
     });
     suppressUIAnimationOnce = false;
