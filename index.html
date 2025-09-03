@@ -157,7 +157,10 @@
         <div class="qr-content">
             <h3>Scan this code to join the game</h3>
             <canvas id="fullscreen-qr-code"></canvas>
-            <p>Your Host ID: <span id="peer-id-display"></span></p>
+            <div class="peer-id-container">
+                <span>Your Host ID: <span id="peer-id-display"></span></span>
+                <button id="copy-id-btn" class="copy-btn">Copy ID</button>
+            </div>
             <button id="close-qr-overlay" class="close-btn">✕</button>
         </div>
     </div>

@@ -116,6 +116,24 @@ function initializeStartOverlay() {
         }
     });
 
+    joinInput.addEventListener('click', async () => {
+        if (peerId && navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+            try {
+                // This may trigger a browser permission prompt
+                const clipboardText = await navigator.clipboard.readText();
+                const trimmedText = clipboardText.trim();
+                // Basic check for a plausible ID (not empty)
+                if (trimmedText.length > 3) {
+                    joinInput.value = trimmedText;
+                    joinGame(trimmedText);
+                }
+            } catch (err) {
+                console.warn('Could not read from clipboard or permission denied:', err.name);
+                // Fail silently, user can still type manually.
+            }
+        }
+    });
+
     joinInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             const hostId = joinInput.value.trim();
@@ -134,8 +152,29 @@ function initializeStartOverlay() {
 
     const qrOverlay = document.getElementById('qr-code-overlay');
     const closeQrBtn = document.getElementById('close-qr-overlay');
+    const copyIdBtn = document.getElementById('copy-id-btn');
+    const peerIdSpan = document.getElementById('peer-id-display');
+
     closeQrBtn.addEventListener('click', () => {
         qrOverlay.classList.add('hidden');
+    });
+
+    copyIdBtn.addEventListener('click', () => {
+        const hostId = peerIdSpan.textContent;
+        if (hostId && navigator.clipboard) {
+            navigator.clipboard.writeText(hostId).then(() => {
+                const originalText = copyIdBtn.textContent;
+                copyIdBtn.textContent = 'Copied!';
+                copyIdBtn.disabled = true;
+                setTimeout(() => {
+                    copyIdBtn.textContent = originalText;
+                    copyIdBtn.disabled = false;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy ID: ', err);
+                alert('Could not copy ID to clipboard.');
+            });
+        }
     });
 
     // Add listener for mini QR code to show fullscreen overlay

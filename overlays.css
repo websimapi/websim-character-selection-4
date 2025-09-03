@@ -197,12 +197,45 @@
     font-family: 'Cinzel', serif;
 }
 
-.qr-content p {
+.qr-content p, .qr-content .peer-id-container {
     margin-top: 1rem;
     font-size: 0.9rem;
     opacity: 0.8;
     word-break: break-all;
     max-width: 90vw;
+}
+
+.peer-id-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 12px;
+    border-radius: 6px;
+    flex-wrap: wrap; /* for small screens */
+}
+
+.copy-btn {
+    background: #ffd700;
+    color: #1a1a2e;
+    border: none;
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: var(--relic-cursor);
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    background: #f0c800;
+}
+
+.copy-btn:disabled {
+    background: #4ade80;
+    color: #fff;
+    cursor: default;
 }
 
 .camera-overlay {
