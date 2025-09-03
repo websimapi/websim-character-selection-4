@@ -19,46 +19,51 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
     // Also check for greyish colors by component difference.
     const maxComp = Math.max(r, g, b);
     const minComp = Math.min(r, g, b);
-    if ((maxComp - minComp) < 20 && l < 0.5) {
+    if ((maxComp - minComp) < 25 && l < 0.5) {
         return false;
     }
     
-    // Staff Glow Guard: Exclude very bright, near-white colors. This is more aggressive to protect the staff.
+    // Staff Glow Guard: Exclude very bright, near-white colors.
     if (l > 0.85 || (l > 0.75 && s < 0.5)) {
         return false;
     }
 
+    // Staff Wood Guard: Exclude brownish-orange hues typical of the staff's wood.
+    // Staff wood is around h:30-38, s:0.3-0.5.
+    const isStaffWoodHue = h >= 30 && h <= 39;
+    if (isStaffWoodHue && s > 0.25 && l < 0.6) {
+        return false;
+    }
+    
     // Skin Tone Guard: Exclude pixels that fall within typical skin tone ranges.
-    // This is refined to be more specific to avoid accidentally filtering out gold/yellow tones.
     const isUpperBody = y < imageHeight * 0.65;
     if (isUpperBody) {
-        // More specific skin tone check: skin is typically in the orange hue range,
-        // with moderate saturation and brightness. Very bright or very saturated pixels
-        // are less likely to be skin. Gold can be bright and saturated.
-        const isSkinHue = h >= 18 && h <= 45; // Broadened slightly
+        // Skin is typically in the orange hue range.
+        const isSkinHue = h >= 15 && h <= 38; 
         const isSkinSat = s >= 0.20 && s <= 0.65;
         const isSkinLight = l >= 0.35 && l <= 0.85;
 
         if (isSkinHue && isSkinSat && isSkinLight) {
-            // Check for color dominance. Skin has r > g > b.
-            // Gold/yellow has r ~= g > b. If green is much lower than red, it's more likely skin.
-            if (r > g && (r - g) > 25) {
+            // A key differentiator: skin has a noticeable gap between Red and Green components,
+            // whereas gold/yellow has Red and Green components that are much closer.
+            if (r > g && (r - g) > 28) {
                 return false;
             }
         }
     }
 
-    // Hue check: Target yellows and golds, avoiding greenish yellows.
-    const hueOK = (h >= 40 && h <= 70);
+    // Main Selection Logic
+    // Hue check: Target a specific range of gold/yellow.
+    const hueOK = (h >= 40 && h <= 55);
     // Chroma check: Ensure yellow/gold is dominant. Yellow is high R and G, low B.
     const yellowDominance = (r + g) / 2 - b;
-    const chromaOK = yellowDominance > 25; // Lowered threshold slightly for colors like #AA9360
+    const chromaOK = yellowDominance > 30; 
     // Saturation & Lightness checks: Avoid greys, blacks, whites.
-    const satOK = s > 0.25; // Lowered from 0.30 to include #AA9360 (s=0.29)
-    const lightOK = l > 0.20 && l < 0.90; // Raised upper bound to catch brighter golds
+    const satOK = s > 0.28; 
+    const lightOK = l > 0.25 && l < 0.85;
     
-    // A specific guard for dark, less saturated gold/brass colors.
-    const darkYellowGuard = (g > b && r > b) && (g > 60 && r > 60) && l < 0.55 && s > 0.20;
+    // Guard for darker, less saturated gold/brass colors found on the trim.
+    const darkYellowGuard = (g > b && r > b) && l < 0.55 && s > 0.25 && hueOK;
 
     return (hueOK && satOK && lightOK && chromaOK) || darkYellowGuard;
 }
