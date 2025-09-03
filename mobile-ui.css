@@ -1,0 +1,67 @@
+#mobile-color-switcher {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 50;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 10px;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.color-chip {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 3px solid white;
+    cursor: var(--relic-cursor);
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.color-chip:hover:not(.occupied):not(.current) {
+    transform: scale(1.1);
+}
+
+.color-chip.current {
+    transform: scale(1.15);
+    border-width: 4px;
+    box-shadow: 0 0 10px 2px var(--chip-glow-color);
+}
+
+.color-chip.occupied {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #333 !important;
+    border-color: #555;
+}
+
+.color-chip.occupied span {
+    font-size: 24px;
+    font-weight: bold;
+    color: black;
+    text-shadow: 0 0 3px white;
+}
+
+.color-chip[data-color="blue"] {
+    background-color: #4a9eff;
+    --chip-glow-color: #4a9eff;
+}
+.color-chip[data-color="green"] {
+    background-color: #4ade80;
+    --chip-glow-color: #4ade80;
+}
+.color-chip[data-color="yellow"] {
+    background-color: #fbbf24;
+    --chip-glow-color: #fbbf24;
+}
+.color-chip[data-color="red"] {
+    background-color: #ef4444;
+    --chip-glow-color: #ef4444;
+}
+
