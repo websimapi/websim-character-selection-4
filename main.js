@@ -22,7 +22,6 @@ let playerSlots = [
     { occupied: false, color: 'yellow', characterIndex: 2, playerId: null, gender: 'male' }, // Player 3
     { occupied: false, color: 'red', characterIndex: 3, playerId: null, gender: 'male' }  // Player 4
 ];
-const defaultPlayerSlots = JSON.parse(JSON.stringify(playerSlots));
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
@@ -140,9 +139,38 @@ function handleClientMessage(conn, data) {
         return;
     }
     const slotIndex = playerSlots.indexOf(playerSlot);
-    const oldCharacterIndex = playerSlot.characterIndex;
 
     switch (data.type) {
+        case 'slot_switch_request':
+            const newSlot = playerSlots[data.newSlotIndex];
+            const oldSlot = playerSlots[data.oldSlotIndex];
+            
+            // Validate the request
+            if (newSlot.occupied || data.oldSlotIndex !== slotIndex) {
+                console.warn('Invalid slot switch request');
+                return;
+            }
+            
+            // Execute the switch
+            oldSlot.occupied = false;
+            oldSlot.playerId = null;
+            
+            newSlot.occupied = true;
+            newSlot.playerId = conn.peer;
+            newSlot.characterIndex = oldSlot.characterIndex;
+            newSlot.gender = oldSlot.gender;
+            
+            // Broadcast to all clients
+            broadcastToClients({
+                type: 'slot_switch',
+                oldSlotIndex: data.oldSlotIndex,
+                newSlotIndex: data.newSlotIndex,
+                playerSlots: playerSlots
+            });
+            
+            updateCharacterSlotsUI();
+            break;
+            
         case 'character_change':
             if (slotIndex === data.slotIndex) { // Security check
                 playerSlot.characterIndex = data.characterIndex;
@@ -183,64 +211,7 @@ function handleClientMessage(conn, data) {
                 }
             }
             break;
-        case 'slot_change_request':
-            if (playerSlot) { // Ensure player exists
-                switchPlayerSlot(conn.peer, data.newSlotIndex);
-            }
-            break;
     }
-}
-
-function switchPlayerSlot(playerId, newSlotIndex) {
-    const currentSlotIndex = playerSlots.findIndex(s => s.playerId === playerId);
-    if (currentSlotIndex === -1 || newSlotIndex < 0 || newSlotIndex >= playerSlots.length) {
-        console.warn(`Invalid slot change request for player ${playerId}`);
-        return;
-    }
-
-    if (playerSlots[newSlotIndex].occupied) {
-        console.warn(`Player ${playerId} tried to switch to occupied slot ${newSlotIndex}`);
-        return; // Slot is already taken
-    }
-
-    // Preserve the player's character data
-    const playerData = {
-        characterIndex: playerSlots[currentSlotIndex].characterIndex,
-        gender: playerSlots[currentSlotIndex].gender,
-    };
-
-    // Vacate the old slot, resetting it to default state
-    const oldSlotDefault = defaultPlayerSlots[currentSlotIndex];
-    playerSlots[currentSlotIndex] = {
-        ...oldSlotDefault,
-        occupied: false,
-        playerId: null,
-    };
-
-    // Occupy the new slot with the player's data
-    playerSlots[newSlotIndex] = {
-        ...playerSlots[newSlotIndex],
-        occupied: true,
-        playerId: playerId,
-        characterIndex: playerData.characterIndex,
-        gender: playerData.gender,
-    };
-    
-    // If the host is the one switching, update their mySlotIndex
-    if (playerId === peerId) {
-        mySlotIndex = newSlotIndex;
-    }
-
-    // Announce the change to everyone
-    broadcastToClients({
-        type: 'player_slots_update',
-        playerSlots: playerSlots,
-        switchedPlayerId: playerId // Let clients know who switched for UI updates
-    });
-
-    // Update the host's own UI
-    updateCharacterSlotsUI();
-    console.log(`Player ${playerId} moved from slot ${currentSlotIndex} to ${newSlotIndex}`);
 }
 
 function broadcastToClients(message) {
@@ -309,5 +280,47 @@ function updateCharacterSlotsUI() {
         }
     });
     if (typeof renderPlayersStrip === 'function') renderPlayersStrip();
-    if (typeof renderMobileColorSwitcher === 'function') renderMobileColorSwitcher();
+}
+
+function switchPlayerSlot(newSlotIndex) {
+    const oldSlotIndex = mySlotIndex;
+    const newSlot = playerSlots[newSlotIndex];
+    const oldSlot = playerSlots[oldSlotIndex];
+    
+    // Can't switch to occupied slot
+    if (newSlot.occupied) return;
+    
+    // Can't switch to same slot
+    if (newSlotIndex === oldSlotIndex) return;
+    
+    if (isHost) {
+        // Host switches slots locally
+        oldSlot.occupied = false;
+        oldSlot.playerId = null;
+        
+        newSlot.occupied = true;
+        newSlot.playerId = 'host';
+        newSlot.characterIndex = oldSlot.characterIndex;
+        newSlot.gender = oldSlot.gender;
+        
+        mySlotIndex = newSlotIndex;
+        
+        // Broadcast the change
+        broadcastToClients({
+            type: 'slot_switch',
+            oldSlotIndex: oldSlotIndex,
+            newSlotIndex: newSlotIndex,
+            playerSlots: playerSlots
+        });
+        
+        updateCharacterSlotsUI();
+        applyMobileSingleSlotMode();
+    } else {
+        // Client requests slot switch
+        sendToHost({
+            type: 'slot_switch_request',
+            oldSlotIndex: oldSlotIndex,
+            newSlotIndex: newSlotIndex
+        });
+    }
 }

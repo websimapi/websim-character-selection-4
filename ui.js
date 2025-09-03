@@ -18,24 +18,22 @@ function initializeCharacterSelection() {
         // Initial color shader application
         applyColorShader(slot);
 
+        // Desktop slot switching - click empty slots to switch
+        slot.addEventListener('click', (e) => {
+            // Only on desktop and only if slot is empty
+            if (document.body.classList.contains('mobile')) return;
+            if (!slot.classList.contains('empty')) return;
+            if (!isHost && !connections.length) return; // Not connected
+            
+            // Prevent if clicking on arrows or other controls
+            if (e.target.classList.contains('arrow') || e.target.classList.contains('gender-toggle')) return;
+            
+            switchPlayerSlot(index);
+        });
+
         // Arrow click listeners for character swapping (only for host or own slot)
         const leftArrow = slot.querySelector('.left-arrow');
         const rightArrow = slot.querySelector('.right-arrow');
-
-        // Slot click listener for switching slots (desktop)
-        slot.addEventListener('click', () => {
-            const isMobile = document.body.classList.contains('mobile');
-            if (isMobile) return; // This interaction is for desktop only
-
-            const slotData = playerSlots[index];
-            if (slotData.occupied) return; // Can't switch to an occupied slot
-
-            if (isHost) {
-                switchPlayerSlot(peerId, index);
-            } else if(mySlotIndex !== null) {
-                sendToHost({ type: 'slot_change_request', newSlotIndex: index });
-            }
-        });
 
         leftArrow.addEventListener('click', () => {
             if (!canControlSlot(index)) return;
@@ -89,6 +87,21 @@ function initializeCharacterSelection() {
                     sendToHost({ type: 'gender_change', slotIndex: index, gender: newGender });
                 }
             });
+        });
+    });
+    
+    initializeMobileColorPicker();
+}
+
+function initializeMobileColorPicker() {
+    const colorPicker = document.getElementById('mobile-color-picker');
+    const colorOptions = colorPicker.querySelectorAll('.color-option');
+    
+    colorOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            const slotIndex = parseInt(option.dataset.slot, 10);
+            if (option.classList.contains('occupied')) return;
+            switchPlayerSlot(slotIndex);
         });
     });
 }
@@ -317,12 +330,17 @@ function handleHostMessage(data) {
         case 'player_slots_update':
             // Used for players joining/leaving
             playerSlots = data.playerSlots;
-            // Check if this client was the one who switched
-            if (data.switchedPlayerId === peerId) {
-                mySlotIndex = playerSlots.findIndex(s => s.playerId === peerId);
+            updateCharacterSlotsUI();
+            updateMobileColorPicker();
+            break;
+
+        case 'slot_switch':
+            playerSlots = data.playerSlots;
+            if (data.oldSlotIndex !== undefined) {
+                mySlotIndex = data.newSlotIndex;
+                updateCharacterSlotsUI();
                 applyMobileSingleSlotMode();
             }
-            updateCharacterSlotsUI();
             break;
             
         case 'character_change':
@@ -347,46 +365,36 @@ function handleHostMessage(data) {
     }
 }
 
+function updateMobileColorPicker() {
+    if (!document.body.classList.contains('mobile')) return;
+    
+    const colorPicker = document.getElementById('mobile-color-picker');
+    const colorOptions = colorPicker.querySelectorAll('.color-option');
+    
+    colorOptions.forEach((option, index) => {
+        const slot = playerSlots[index];
+        option.classList.toggle('occupied', slot.occupied && index !== mySlotIndex);
+        option.classList.toggle('current', index === mySlotIndex);
+    });
+}
+
 function applyMobileSingleSlotMode() {
     if (!document.body.classList.contains('mobile')) return;
     document.querySelectorAll('.character-slot').forEach((el, i) => {
         el.classList.toggle('own-slot', i === mySlotIndex);
     });
     document.body.classList.add('mobile-single-slot');
+    
+    // Show mobile color picker
+    const colorPicker = document.getElementById('mobile-color-picker');
+    if (isHost || connections.length > 0) {
+        colorPicker.classList.add('visible');
+        updateMobileColorPicker();
+    }
+    
     renderPlayersStrip();
 }
 window.applyMobileSingleSlotMode = applyMobileSingleSlotMode;
-
-function renderMobileColorSwitcher() {
-    const switcher = document.getElementById('mobile-color-switcher');
-    if (!switcher) return;
-    switcher.innerHTML = '';
-    
-    playerSlots.forEach((slot, index) => {
-        const chip = document.createElement('div');
-        chip.className = 'color-chip';
-        chip.dataset.color = slot.color;
-
-        if (slot.occupied) {
-            if (slot.playerId !== peerId) {
-                chip.classList.add('occupied');
-                chip.innerHTML = '<span>✕</span>'; // Black X
-            } else {
-                chip.classList.add('current');
-            }
-        } else {
-            // It's free, make it clickable
-            chip.addEventListener('click', () => {
-                if (isHost) {
-                    switchPlayerSlot(peerId, index);
-                } else {
-                    sendToHost({ type: 'slot_change_request', newSlotIndex: index });
-                }
-            });
-        }
-        switcher.appendChild(chip);
-    });
-}
 
 function renderPlayersStrip() {
     const strip = document.getElementById('players-strip');
@@ -442,7 +450,7 @@ function updatePlayerChip(slotIndex, direction = 'fade') {
 }
 
 function colorizeChipImage(img, character, colorName) {
-    const cached = (window.characterImageCache?.[(character.genders ? character.genders[(playerSlots.find(s=>s.color===colorName)?.gender || 'male')]?.img : character.img)] || {})[colorName];
+    const cached = (window.characterImageCache?.[(character.genders ? character.genders[(playerSlots.find(s=>s.color===colorName)?.gender || 'male'] : character).img] || {})[colorName];
     if (cached) { img.src = cached; return; }
     processAndCacheImage(img, character, colorName).then(blobUrl => {
         if (blobUrl) {

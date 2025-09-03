@@ -167,6 +167,7 @@
     }
 }
 
+
 @media (max-width: 768px) {
   body.mobile.mobile-single-slot .players-strip { display: flex; }
   body.mobile.mobile-single-slot .characters-grid { overflow: visible; padding: 0; }
@@ -181,5 +182,4 @@
       max-width: none;
       flex: 1 1 auto;
   }
-  body.mobile.mobile-single-slot #mobile-color-switcher { display: flex; }
 }
