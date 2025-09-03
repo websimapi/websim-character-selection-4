@@ -33,10 +33,14 @@ function selectiveRecolorWarrior(img, targetHue, returnBlob = false) {
 
                     if (isBluish(hsl.h, hsl.s, hsl.l, r, g, b)) {
                         let h = (hsl.h + shift) % 360; let s = hsl.s, l = hsl.l;
-                        if (targetHue === 60) { 
+                        if (targetHue === 60) { // Yellow
                             h = 52; 
                             s = Math.min(1, s * 1.22); 
                             l = Math.max(0, Math.min(1, l * 1.12)); 
+                        } else if (targetHue === 0) { // Darker Red
+                            h = 0; // Force pure red hue to avoid purple tint
+                            s = Math.min(1, s * 1.1); // Slightly boost saturation for a richer red
+                            l = Math.max(0, l * 0.85); // Make it darker
                         }
                         const rgb = hslToRgb(h, s, l);
                         let rr = rgb.r, gg = rgb.g, bb = rgb.b;
@@ -44,6 +48,10 @@ function selectiveRecolorWarrior(img, targetHue, returnBlob = false) {
                            rr = Math.min(255, rgb.r + 22);
                            gg = Math.max(0, rgb.g - 4);
                            bb = Math.max(0, rgb.b - 36);
+                        } else if (targetHue === 0) { // Darker Red RGB fine-tuning
+                            // Reduce green and blue components to ensure a deep, pure red
+                            gg = Math.max(0, rgb.g - 15);
+                            bb = Math.max(0, rgb.b - 15);
                         }
                         p[i] = rr; p[i+1] = gg; p[i+2] = bb;
                     }
