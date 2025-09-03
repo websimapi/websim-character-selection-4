@@ -3,6 +3,21 @@ function initializeCharacterSelection() {
     const characterSlots = document.querySelectorAll('.character-slot');
 
     characterSlots.forEach((slot, index) => {
+        // Add a slot overlay container
+        const overlay = document.createElement('div');
+        overlay.className = 'slot-overlay';
+        slot.appendChild(overlay);
+
+        // Click listener for the whole slot for switching
+        slot.addEventListener('click', () => {
+            if (slot.classList.contains('empty') && !document.body.classList.contains('mobile')) {
+                const myCurrentSlot = playerSlots.findIndex(p => p.playerId === peerId);
+                if (myCurrentSlot !== -1) {
+                    requestSlotChange(myCurrentSlot, index);
+                }
+            }
+        });
+
         // Initial setup
         const slotData = playerSlots[index];
         if (!slotData.occupied) {
@@ -79,14 +94,20 @@ function initializeCharacterSelection() {
 }
 
 function canControlSlot(slotIndex) {
-    // Host can only control their slot (index 0).
+    // Host can only control their own slot.
     // Clients can only control their assigned slot.
     const slotData = playerSlots[slotIndex];
+    const myId = isHost ? 'host' : peerId;
 
     if (isHost) {
-        return slotIndex === 0;
+        // Host can control ANY UNOCCUPIED slot initially, but once they pick one, they are locked to it.
+        // For simplicity in multiplayer, we'll stick to: host controls their current slot.
+        // Slot switching is a separate mechanic.
+        const hostSlotIndex = playerSlots.findIndex(p => p.playerId === 'host');
+        return slotIndex === hostSlotIndex;
     } else {
-        return slotData.occupied && slotData.playerId === peerId;
+        const mySlotIndex = playerSlots.findIndex(p => p.playerId === peerId);
+        return slotIndex === mySlotIndex;
     }
 }
 
@@ -293,16 +314,30 @@ function handleHostMessage(data) {
     switch (data.type) {
         case 'slot_assignment':
             console.log('Assigned to slot:', data.slot);
-            mySlotIndex = data.slot;
             playerSlots = data.playerSlots;
-            applyMobileSingleSlotMode();
             updateCharacterSlotsUI(); // Full sync on first join
+            mySlotIndex = data.slot;
+            applyMobileSingleSlotMode();
+            updateMobileColorSwitcher();
             break;
             
         case 'player_slots_update':
-            // Used for players joining/leaving
+            // Used for players joining/leaving/switching
+            const myOldSlot = playerSlots.findIndex(p => p.playerId === peerId);
             playerSlots = data.playerSlots;
+            const myNewSlot = playerSlots.findIndex(p => p.playerId === peerId);
+            
+            if (myNewSlot !== -1) {
+                mySlotIndex = myNewSlot;
+            }
+
+            if (document.body.classList.contains('mobile-single-slot') && myOldSlot !== myNewSlot) {
+                // If I switched slots on mobile, re-render my view
+                applyMobileSingleSlotMode();
+            }
+
             updateCharacterSlotsUI();
+            updateMobileColorSwitcher();
             break;
             
         case 'character_change':
@@ -334,6 +369,7 @@ function applyMobileSingleSlotMode() {
     });
     document.body.classList.add('mobile-single-slot');
     renderPlayersStrip();
+    updateMobileColorSwitcher();
 }
 window.applyMobileSingleSlotMode = applyMobileSingleSlotMode;
 
@@ -341,59 +377,22 @@ function renderPlayersStrip() {
     const strip = document.getElementById('players-strip');
     if (!strip) return;
     strip.innerHTML = '';
-    const me = mySlotIndex;
+    const me = playerSlots.findIndex(p => p.playerId === (isHost ? 'host' : peerId));
     playerSlots.forEach((slot, i) => {
         if (!slot.occupied || i === me) return;
         const c = characters[slot.characterIndex];
         const imgSrc = c.genders ? c.genders[slot.gender || 'male'].img : c.img;
-        const cached = (window.characterImageCache?.[imgSrc] || {})[playerSlots[i].color];
+        const cached = (window.characterImageCache?.[imgSrc] || {})[slot.color];
         const chip = document.createElement('div');
         chip.className = 'player-chip';
-        chip.dataset.color = playerSlots[i].color;
+        chip.dataset.color = slot.color;
         chip.dataset.slotIndex = i;
         const img = document.createElement('img');
         img.src = cached || imgSrc;
         img.alt = c.name;
         chip.appendChild(img);
-        colorizeChipImage(img, c, playerSlots[i].color);
+        colorizeChipImage(img, c, slot.color);
         strip.appendChild(chip);
-    });
-}
-
-function renderColorSwitcher() {
-    const switcher = document.getElementById('color-switcher');
-    if (!switcher || isHost || !document.body.classList.contains('mobile-single-slot')) {
-        if (switcher) switcher.style.display = 'none';
-        return;
-    }
-
-    switcher.style.display = 'flex';
-    switcher.innerHTML = '';
-
-    playerSlots.forEach((slot, index) => {
-        // Player 1 (host) slot is not switchable to.
-        if (index === 0) return;
-
-        const block = document.createElement('div');
-        block.className = 'color-block';
-        block.dataset.color = slot.color;
-        block.dataset.slotIndex = index;
-
-        if (slot.occupied) {
-            if (slot.playerId === peerId) {
-                block.classList.add('current');
-            } else {
-                block.classList.add('taken');
-            }
-        } else {
-            // It's free! Make it clickable.
-            block.addEventListener('click', () => {
-                if (block.classList.contains('taken') || block.classList.contains('current')) return;
-                console.log(`Requesting to switch to slot ${index}`);
-                sendToHost({ type: 'slot_switch_request', newSlotIndex: index });
-            });
-        }
-        switcher.appendChild(block);
     });
 }
 
@@ -439,5 +438,46 @@ function colorizeChipImage(img, character, colorName) {
             const angle = targetHue - character.baseHue;
             img.style.filter = `hue-rotate(${angle}deg)`;
         }
+    });
+}
+
+function updateMobileColorSwitcher() {
+    const switcher = document.getElementById('mobile-color-switcher');
+    if (!switcher || !document.body.classList.contains('mobile-single-slot')) return;
+
+    const myCurrentSlotIndex = playerSlots.findIndex(p => p.playerId === peerId);
+
+    switcher.innerHTML = '';
+    playerSlots.forEach((slot, i) => {
+        const swatch = document.createElement('div');
+        swatch.className = 'color-swatch';
+        swatch.dataset.slotIndex = i;
+        swatch.dataset.color = slot.color;
+        
+        if (slot.occupied) {
+            const isMySlot = isHost ? i === 0 : slot.playerId === peerId; // Simplified for initial host state
+            if (myCurrentSlotIndex !== -1) { // If client has an assigned slot
+                if(slot.playerId === peerId) {
+                     swatch.classList.add('current');
+                } else {
+                     swatch.classList.add('occupied');
+                }
+            } else { // Fallback for host before clients connect
+                 if (isMySlot) {
+                    swatch.classList.add('current');
+                } else {
+                    swatch.classList.add('occupied');
+                }
+            }
+        } else {
+            swatch.classList.add('available');
+            swatch.addEventListener('click', () => {
+                 const mySlotToSwitchFrom = playerSlots.findIndex(p => p.playerId === peerId);
+                 if (mySlotToSwitchFrom !== -1) {
+                    requestSlotChange(mySlotToSwitchFrom, i);
+                 }
+            });
+        }
+        switcher.appendChild(swatch);
     });
 }

@@ -15,7 +15,7 @@ let peerId = null;
 let connections = [];
 let isHost = false;
 let gameMode = null; // 'scan' or 'realtime'
-let mySlotIndex = 0;
+let mySlotIndex = 0; // This will now dynamically update for clients
 let playerSlots = [
     { occupied: true, color: 'blue', characterIndex: 0, playerId: 'host', gender: 'male' }, // Player 1 (host)
     { occupied: false, color: 'green', characterIndex: 1, playerId: null, gender: 'male' }, // Player 2
@@ -37,6 +37,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize networking
     initializePeerJS();
+    
+    // Initialize UI for slot switching states
+    updateCharacterSlotsUI();
 
     // Now initialize the rest of the app
     initializeCharacterSelection();
@@ -125,6 +128,66 @@ function handleIncomingConnection(conn) {
     });
 }
 
+function requestSlotChange(fromIndex, toIndex) {
+    if (isHost) {
+        handleSlotChange(peerId, fromIndex, toIndex);
+    } else {
+        sendToHost({ type: 'request_slot_change', from: fromIndex, to: toIndex });
+    }
+}
+
+function handleSlotChange(requestingPlayerId, fromIndex, toIndex) {
+    // This function must only run on the host
+    if (!isHost) return;
+
+    const fromSlot = playerSlots[fromIndex];
+    const toSlot = playerSlots[toIndex];
+    const actualPlayerId = requestingPlayerId === peerId ? 'host' : requestingPlayerId;
+
+    // --- Validation ---
+    // 1. Is the target slot available?
+    if (toSlot.occupied) {
+        console.warn(`Slot change denied: Target slot ${toIndex} is already occupied.`);
+        return;
+    }
+    // 2. Does the 'from' slot actually belong to the player requesting the change?
+    if (fromSlot.playerId !== actualPlayerId) {
+        console.warn(`Slot change denied: Player ${actualPlayerId} does not own slot ${fromIndex}.`);
+        // This could be a sign of a desync or malicious client. A full sync could be sent back.
+        return;
+    }
+
+    // --- Execution ---
+    console.log(`Player ${actualPlayerId} switching from slot ${fromIndex} to ${toIndex}`);
+    
+    // Copy data to new slot
+    toSlot.occupied = true;
+    toSlot.playerId = fromSlot.playerId;
+    toSlot.characterIndex = fromSlot.characterIndex;
+    toSlot.gender = fromSlot.gender;
+
+    // Clear old slot
+    fromSlot.occupied = false;
+    fromSlot.playerId = null;
+    // We can leave characterIndex/gender as is, it will be overwritten if someone takes the slot.
+
+    // Notify all players of the new state
+    broadcastToClients({
+        type: 'player_slots_update',
+        playerSlots: playerSlots
+    });
+    
+    // Update host's own UI
+    if (actualPlayerId === 'host') {
+        mySlotIndex = toIndex;
+        if (document.body.classList.contains('mobile-single-slot')) {
+            applyMobileSingleSlotMode();
+        }
+    }
+    updateCharacterSlotsUI();
+    updateMobileColorSwitcher();
+}
+
 function sendToHost(message) {
     // Client function to send data to the host
     if (!isHost && connections.length > 0 && connections[0].open) {
@@ -142,6 +205,9 @@ function handleClientMessage(conn, data) {
     const oldCharacterIndex = playerSlot.characterIndex;
 
     switch (data.type) {
+        case 'request_slot_change':
+            handleSlotChange(conn.peer, data.from, data.to);
+            break;
         case 'character_change':
             if (slotIndex === data.slotIndex) { // Security check
                 playerSlot.characterIndex = data.characterIndex;
@@ -182,37 +248,6 @@ function handleClientMessage(conn, data) {
                 }
             }
             break;
-        case 'slot_switch_request':
-            const newSlotIndex = data.newSlotIndex;
-            const currentSlotIndex = playerSlots.findIndex(s => s.playerId === conn.peer);
-
-            // Validation: Is the request valid and is the target slot available?
-            if (currentSlotIndex !== -1 && newSlotIndex >= 0 && newSlotIndex < playerSlots.length && !playerSlots[newSlotIndex].occupied) {
-                const currentSlot = playerSlots[currentSlotIndex];
-                
-                // Assign player to new slot, preserving their character choice
-                playerSlots[newSlotIndex].occupied = true;
-                playerSlots[newSlotIndex].playerId = conn.peer;
-                playerSlots[newSlotIndex].characterIndex = currentSlot.characterIndex;
-                playerSlots[newSlotIndex].gender = currentSlot.gender;
-
-                // Free up the old slot
-                currentSlot.occupied = false;
-                currentSlot.playerId = null;
-                // Note: We leave characterIndex and gender on the old slot. It becomes the new default for that slot.
-
-                // Broadcast the full state update to all clients
-                broadcastToClients({
-                    type: 'player_slots_update',
-                    playerSlots: playerSlots
-                });
-                
-                // Also update the host's own UI
-                updateCharacterSlotsUI();
-            } else {
-                console.warn(`Player ${conn.peer} requested an invalid/taken slot: ${newSlotIndex}`);
-            }
-            break;
     }
 }
 
@@ -236,6 +271,7 @@ function removePlayer(playerId) {
         });
         
         updateCharacterSlotsUI();
+        updateMobileColorSwitcher();
     }
     
     connections = connections.filter(conn => conn.peer !== playerId);
@@ -247,9 +283,25 @@ function updateCharacterSlotsUI() {
         const playerSlot = playerSlots[index];
         const currentCharacterIndex = parseInt(slot.dataset.characterIndex, 10);
         const currentGender = slot.dataset.archerGender;
+        const myId = isHost ? 'host' : peerId;
+        const isMySlot = playerSlot.playerId === myId;
+        const overlay = slot.querySelector('.slot-overlay');
+        
+        // Clear previous state classes
+        slot.classList.remove('empty', 'occupied-by-other', 'my-slot');
+        if (overlay) overlay.textContent = '';
+        overlay.style.display = 'none';
 
         if (playerSlot.occupied) {
-            slot.classList.remove('empty');
+            if (isMySlot) {
+                slot.classList.add('my-slot');
+            } else {
+                slot.classList.add('occupied-by-other');
+                if (overlay) {
+                    overlay.textContent = 'X';
+                    overlay.style.display = 'flex';
+                }
+            }
             
             let characterChanged = playerSlot.characterIndex !== currentCharacterIndex;
             let genderChanged = false;
@@ -279,8 +331,11 @@ function updateCharacterSlotsUI() {
 
         } else {
             slot.classList.add('empty');
+            if (overlay && !document.body.classList.contains('mobile')) {
+                overlay.textContent = 'SWITCH';
+                overlay.style.display = 'flex';
+            }
         }
     });
     if (typeof renderPlayersStrip === 'function') renderPlayersStrip();
-    if (typeof renderColorSwitcher === 'function') renderColorSwitcher();
 }
