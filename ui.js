@@ -208,16 +208,6 @@ function stopCameraScanner(stream) {
 
 function joinGame(hostId) {
     console.log('Attempting to join game with host:', hostId);
-
-    // Defensive check to ensure peer is initialized and not destroyed.
-    if (!peer || peer.destroyed) {
-        console.error('PeerJS is not initialized or has been destroyed. Cannot join game.');
-        alert('Connection error. Please refresh and try again.');
-        // Optionally, re-show the start screen or guide the user.
-        document.getElementById('start-overlay').classList.remove('hidden');
-        return;
-    }
-
     isHost = false;
     
     const conn = peer.connect(hostId);

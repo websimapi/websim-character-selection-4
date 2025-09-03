@@ -217,6 +217,9 @@ body {
     display: inline-block;
     flex-grow: 1;
     white-space: nowrap;
+    min-width: 0; /* Allow this element to shrink below its content size */
+    overflow: hidden; /* Hide the overflowing text */
+    text-overflow: ellipsis; /* Add ... to truncated text */
 }
 
 .character-stats .stat-label.fade-out {
