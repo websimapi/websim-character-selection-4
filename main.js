@@ -182,6 +182,37 @@ function handleClientMessage(conn, data) {
                 }
             }
             break;
+        case 'slot_switch_request':
+            const newSlotIndex = data.newSlotIndex;
+            const currentSlotIndex = playerSlots.findIndex(s => s.playerId === conn.peer);
+
+            // Validation: Is the request valid and is the target slot available?
+            if (currentSlotIndex !== -1 && newSlotIndex >= 0 && newSlotIndex < playerSlots.length && !playerSlots[newSlotIndex].occupied) {
+                const currentSlot = playerSlots[currentSlotIndex];
+                
+                // Assign player to new slot, preserving their character choice
+                playerSlots[newSlotIndex].occupied = true;
+                playerSlots[newSlotIndex].playerId = conn.peer;
+                playerSlots[newSlotIndex].characterIndex = currentSlot.characterIndex;
+                playerSlots[newSlotIndex].gender = currentSlot.gender;
+
+                // Free up the old slot
+                currentSlot.occupied = false;
+                currentSlot.playerId = null;
+                // Note: We leave characterIndex and gender on the old slot. It becomes the new default for that slot.
+
+                // Broadcast the full state update to all clients
+                broadcastToClients({
+                    type: 'player_slots_update',
+                    playerSlots: playerSlots
+                });
+                
+                // Also update the host's own UI
+                updateCharacterSlotsUI();
+            } else {
+                console.warn(`Player ${conn.peer} requested an invalid/taken slot: ${newSlotIndex}`);
+            }
+            break;
     }
 }
 
@@ -251,4 +282,5 @@ function updateCharacterSlotsUI() {
         }
     });
     if (typeof renderPlayersStrip === 'function') renderPlayersStrip();
+    if (typeof renderColorSwitcher === 'function') renderColorSwitcher();
 }

@@ -293,10 +293,10 @@ function handleHostMessage(data) {
     switch (data.type) {
         case 'slot_assignment':
             console.log('Assigned to slot:', data.slot);
-            playerSlots = data.playerSlots;
-            updateCharacterSlotsUI(); // Full sync on first join
             mySlotIndex = data.slot;
+            playerSlots = data.playerSlots;
             applyMobileSingleSlotMode();
+            updateCharacterSlotsUI(); // Full sync on first join
             break;
             
         case 'player_slots_update':
@@ -357,6 +357,43 @@ function renderPlayersStrip() {
         chip.appendChild(img);
         colorizeChipImage(img, c, playerSlots[i].color);
         strip.appendChild(chip);
+    });
+}
+
+function renderColorSwitcher() {
+    const switcher = document.getElementById('color-switcher');
+    if (!switcher || isHost || !document.body.classList.contains('mobile-single-slot')) {
+        if (switcher) switcher.style.display = 'none';
+        return;
+    }
+
+    switcher.style.display = 'flex';
+    switcher.innerHTML = '';
+
+    playerSlots.forEach((slot, index) => {
+        // Player 1 (host) slot is not switchable to.
+        if (index === 0) return;
+
+        const block = document.createElement('div');
+        block.className = 'color-block';
+        block.dataset.color = slot.color;
+        block.dataset.slotIndex = index;
+
+        if (slot.occupied) {
+            if (slot.playerId === peerId) {
+                block.classList.add('current');
+            } else {
+                block.classList.add('taken');
+            }
+        } else {
+            // It's free! Make it clickable.
+            block.addEventListener('click', () => {
+                if (block.classList.contains('taken') || block.classList.contains('current')) return;
+                console.log(`Requesting to switch to slot ${index}`);
+                sendToHost({ type: 'slot_switch_request', newSlotIndex: index });
+            });
+        }
+        switcher.appendChild(block);
     });
 }
 
