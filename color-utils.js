@@ -12,27 +12,21 @@ function isBluish(h, s, l, r, g, b) {
 }
 
 function isYellowish(h, s, l, r, g, b, y, imageHeight) {
-    // Skin Tone Guard: Exclude pixels that fall within typical skin tone ranges.
-    // We assume the face and hands are in the upper 60% of the image.
     const isUpperBody = y < imageHeight * 0.6;
     if (isUpperBody) {
-        const isSkinTone = (h >= 15 && h <= 45) && (s >= 0.25 && s <= 0.8) && (l >= 0.3 && l <= 0.9);
-        if (isSkinTone) {
-            return false;
-        }
+        const isSkinTone = (h >= 10 && h <= 55) && (s >= 0.22 && s <= 0.8) && (l >= 0.28 && l <= 0.92);
+        if (isSkinTone) return false;
     }
+    // Explicitly exclude near-white/grey (beard, highlights)
+    if (s < 0.15 && l > 0.78) return false;
 
-    // Hue check: Target yellows and oranges.
-    const hueOK = (h >= 35 && h <= 85);
-    // Chroma check: Ensure yellow/gold is dominant. Yellow is high R and G, low B.
+    const hueOK = (h >= 42 && h <= 75); // tighter golden band
     const yellowDominance = (r + g) / 2 - b;
-    const chromaOK = yellowDominance > 20;
-    // Saturation & Lightness checks: Avoid greys, blacks, whites.
-    const satOK = s > 0.20;
-    const lightOK = l > 0.15 && l < 0.95;
-    
-    const darkYellowGuard = (g > b && r > b) && (g > 50 && r > 50) && l < 0.45 && s > 0.2;
+    const chromaOK = yellowDominance > 28 && r > 70 && g > 70; // stronger dominance
+    const satOK = s > 0.22;
+    const lightOK = l > 0.18 && l < 0.85;
 
+    const darkYellowGuard = (g > b && r > b) && (g > 50 && r > 50) && l < 0.45 && s > 0.22;
     return (hueOK && satOK && lightOK && chromaOK) || darkYellowGuard;
 }
 
