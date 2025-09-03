@@ -101,6 +101,8 @@
     cursor: var(--relic-cursor);
     transition: all 0.3s ease;
     backdrop-filter: blur(10px);
+    width: 100%;
+    max-width: 250px;
 }
 
 .mode-btn.host-btn {
@@ -252,4 +254,62 @@
     font-size: 1.2rem;
     cursor: var(--relic-cursor);
     z-index: 1;
+}
+
+.join-control-group {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    max-width: 250px;
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.join-control-group:hover {
+    background: rgba(255, 215, 0, 0.2);
+    transform: translateY(-2px);
+}
+
+.mode-input {
+    flex-grow: 1;
+    background: transparent;
+    border: none;
+    color: #ffd700;
+    font-family: 'Cinzel', serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding: 12px;
+    padding-left: 20px;
+    outline: none;
+    min-width: 0;
+}
+
+.mode-input::placeholder {
+    color: #ffd700;
+    opacity: 0.7;
+}
+
+.scan-icon-btn {
+    flex-shrink: 0;
+    background: transparent;
+    border: none;
+    border-left: 2px solid #ffd700;
+    color: #ffd700;
+    padding: 0 12px;
+    cursor: var(--relic-cursor);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scan-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.scan-icon-btn svg {
+    width: 28px;
+    height: 28px;
 }

@@ -94,7 +94,8 @@ function canControlSlot(slotIndex) {
 function initializeStartOverlay() {
     const startOverlay = document.getElementById('start-overlay');
     const hostBtn = document.getElementById('host-btn');
-    const scanBtn = document.getElementById('scan-to-play-btn');
+    const scanBtn = document.getElementById('scan-qr-btn');
+    const joinInput = document.getElementById('join-id-input');
     const realtimeBtn = document.getElementById('realtime-mode-btn');
     
     hostBtn.addEventListener('click', () => {
@@ -112,6 +113,17 @@ function initializeStartOverlay() {
         } else {
             console.log('PeerJS not ready yet');
             alert('Connection service is not ready, please wait a moment.');
+        }
+    });
+
+    joinInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const hostId = joinInput.value.trim();
+            if (hostId) {
+                joinGame(hostId);
+            } else {
+                alert('Please enter a valid join code.');
+            }
         }
     });
 
