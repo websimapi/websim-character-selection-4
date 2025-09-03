@@ -213,7 +213,21 @@ function selectiveRecolorWizard(img, targetHue, returnBlob = false) {
                         let h = (hsl.h + shift) % 360; 
                         let s = hsl.s, l = hsl.l;
                         
-                        const rgb = hslToRgb(h, s, l);
+                        let rgb;
+                        if (targetHue === 0) { // Darker Red
+                            h = 0; // Force pure red hue to avoid purple tint
+                            s = Math.min(1, s * 1.25); // Boost saturation for a richer red
+                            l = Math.max(0, l * 0.85); // Make it darker
+                            
+                            rgb = hslToRgb(h, s, l);
+                            
+                            // Reduce green and blue components to ensure a deep, pure red
+                            rgb.g = Math.max(0, rgb.g - 15);
+                            rgb.b = Math.max(0, rgb.b - 15);
+                        } else {
+                           rgb = hslToRgb(h, s, l);
+                        }
+
                         p[i] = rgb.r; p[i+1] = rgb.g; p[i+2] = rgb.b;
                     }
                 }
