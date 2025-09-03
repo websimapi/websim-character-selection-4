@@ -139,38 +139,9 @@ function handleClientMessage(conn, data) {
         return;
     }
     const slotIndex = playerSlots.indexOf(playerSlot);
+    const oldCharacterIndex = playerSlot.characterIndex;
 
     switch (data.type) {
-        case 'slot_switch_request':
-            const newSlot = playerSlots[data.newSlotIndex];
-            const oldSlot = playerSlots[data.oldSlotIndex];
-            
-            // Validate the request
-            if (newSlot.occupied || data.oldSlotIndex !== slotIndex) {
-                console.warn('Invalid slot switch request');
-                return;
-            }
-            
-            // Execute the switch
-            oldSlot.occupied = false;
-            oldSlot.playerId = null;
-            
-            newSlot.occupied = true;
-            newSlot.playerId = conn.peer;
-            newSlot.characterIndex = oldSlot.characterIndex;
-            newSlot.gender = oldSlot.gender;
-            
-            // Broadcast to all clients
-            broadcastToClients({
-                type: 'slot_switch',
-                oldSlotIndex: data.oldSlotIndex,
-                newSlotIndex: data.newSlotIndex,
-                playerSlots: playerSlots
-            });
-            
-            updateCharacterSlotsUI();
-            break;
-            
         case 'character_change':
             if (slotIndex === data.slotIndex) { // Security check
                 playerSlot.characterIndex = data.characterIndex;
@@ -210,6 +181,9 @@ function handleClientMessage(conn, data) {
                      updateCharacterSlot(slotElement, characters[playerSlot.characterIndex], 'fade');
                 }
             }
+            break;
+        case 'slot_switch':
+            hostAssignClientToSlot(conn.peer, data.targetIndex);
             break;
     }
 }
@@ -282,45 +256,30 @@ function updateCharacterSlotsUI() {
     if (typeof renderPlayersStrip === 'function') renderPlayersStrip();
 }
 
-function switchPlayerSlot(newSlotIndex) {
-    const oldSlotIndex = mySlotIndex;
-    const newSlot = playerSlots[newSlotIndex];
-    const oldSlot = playerSlots[oldSlotIndex];
-    
-    // Can't switch to occupied slot
-    if (newSlot.occupied) return;
-    
-    // Can't switch to same slot
-    if (newSlotIndex === oldSlotIndex) return;
-    
-    if (isHost) {
-        // Host switches slots locally
-        oldSlot.occupied = false;
-        oldSlot.playerId = null;
-        
-        newSlot.occupied = true;
-        newSlot.playerId = 'host';
-        newSlot.characterIndex = oldSlot.characterIndex;
-        newSlot.gender = oldSlot.gender;
-        
-        mySlotIndex = newSlotIndex;
-        
-        // Broadcast the change
-        broadcastToClients({
-            type: 'slot_switch',
-            oldSlotIndex: oldSlotIndex,
-            newSlotIndex: newSlotIndex,
-            playerSlots: playerSlots
-        });
-        
-        updateCharacterSlotsUI();
-        applyMobileSingleSlotMode();
-    } else {
-        // Client requests slot switch
-        sendToHost({
-            type: 'slot_switch_request',
-            oldSlotIndex: oldSlotIndex,
-            newSlotIndex: newSlotIndex
-        });
+function hostAssignClientToSlot(peerIdToMove, targetIndex) {
+    const target = playerSlots[targetIndex];
+    if (!target || target.occupied) return;
+    const current = playerSlots.find(s => s.playerId === peerIdToMove);
+    if (!current) return;
+    target.occupied = true; target.playerId = peerIdToMove; target.characterIndex = current.characterIndex; target.gender = current.gender;
+    current.occupied = false; current.playerId = null;
+    broadcastToClients({ type: 'player_slots_update', playerSlots });
+    const conn = connections.find(c => c.peer === peerIdToMove);
+    if (conn && conn.open) {
+        conn.send({ type: 'slot_assignment', slot: targetIndex, playerSlots });
     }
+    updateCharacterSlotsUI();
+}
+
+function hostSwitchToSlot(targetIndex) {
+    if (!isHost) return;
+    const target = playerSlots[targetIndex];
+    if (!target || target.occupied) return;
+    const current = playerSlots[mySlotIndex];
+    target.occupied = true; target.playerId = 'host'; target.characterIndex = current.characterIndex; target.gender = current.gender;
+    current.occupied = false; current.playerId = null;
+    mySlotIndex = targetIndex;
+    broadcastToClients({ type: 'player_slots_update', playerSlots });
+    updateCharacterSlotsUI();
+    applyMobileSingleSlotMode();
 }

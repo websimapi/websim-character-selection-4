@@ -18,19 +18,6 @@ function initializeCharacterSelection() {
         // Initial color shader application
         applyColorShader(slot);
 
-        // Desktop slot switching - click empty slots to switch
-        slot.addEventListener('click', (e) => {
-            // Only on desktop and only if slot is empty
-            if (document.body.classList.contains('mobile')) return;
-            if (!slot.classList.contains('empty')) return;
-            if (!isHost && !connections.length) return; // Not connected
-            
-            // Prevent if clicking on arrows or other controls
-            if (e.target.classList.contains('arrow') || e.target.classList.contains('gender-toggle')) return;
-            
-            switchPlayerSlot(index);
-        });
-
         // Arrow click listeners for character swapping (only for host or own slot)
         const leftArrow = slot.querySelector('.left-arrow');
         const rightArrow = slot.querySelector('.right-arrow');
@@ -88,21 +75,39 @@ function initializeCharacterSelection() {
                 }
             });
         });
+
+        // Desktop: click empty slot to switch into it
+        slot.addEventListener('click', () => {
+            const finePointer = window.matchMedia('(pointer: fine)').matches;
+            if (!finePointer) return;
+            if (playerSlots[index]?.occupied) return;
+            requestSlotSwitch(index);
+        });
     });
-    
-    initializeMobileColorPicker();
+    setupMobileSlotPicker();
 }
 
-function initializeMobileColorPicker() {
-    const colorPicker = document.getElementById('mobile-color-picker');
-    const colorOptions = colorPicker.querySelectorAll('.color-option');
-    
-    colorOptions.forEach(option => {
-        option.addEventListener('click', () => {
-            const slotIndex = parseInt(option.dataset.slot, 10);
-            if (option.classList.contains('occupied')) return;
-            switchPlayerSlot(slotIndex);
+function setupMobileSlotPicker() {
+    const picker = document.getElementById('mobile-slot-picker');
+    if (!picker) return;
+    const isMobile = document.body.classList.contains('mobile');
+    picker.classList.toggle('hidden', !isMobile);
+    picker.querySelectorAll('.slot-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const idx = parseInt(btn.dataset.slot, 10);
+            if (playerSlots[idx]?.occupied) return;
+            requestSlotSwitch(idx);
         });
+    });
+    updateMobileSlotPicker();
+}
+
+function updateMobileSlotPicker() {
+    const picker = document.getElementById('mobile-slot-picker');
+    if (!picker) return;
+    picker.querySelectorAll('.slot-pill').forEach(btn => {
+        const idx = parseInt(btn.dataset.slot, 10);
+        btn.classList.toggle('occupied', !!playerSlots[idx]?.occupied);
     });
 }
 
@@ -331,16 +336,7 @@ function handleHostMessage(data) {
             // Used for players joining/leaving
             playerSlots = data.playerSlots;
             updateCharacterSlotsUI();
-            updateMobileColorPicker();
-            break;
-
-        case 'slot_switch':
-            playerSlots = data.playerSlots;
-            if (data.oldSlotIndex !== undefined) {
-                mySlotIndex = data.newSlotIndex;
-                updateCharacterSlotsUI();
-                applyMobileSingleSlotMode();
-            }
+            updateMobileSlotPicker();
             break;
             
         case 'character_change':
@@ -365,33 +361,12 @@ function handleHostMessage(data) {
     }
 }
 
-function updateMobileColorPicker() {
-    if (!document.body.classList.contains('mobile')) return;
-    
-    const colorPicker = document.getElementById('mobile-color-picker');
-    const colorOptions = colorPicker.querySelectorAll('.color-option');
-    
-    colorOptions.forEach((option, index) => {
-        const slot = playerSlots[index];
-        option.classList.toggle('occupied', slot.occupied && index !== mySlotIndex);
-        option.classList.toggle('current', index === mySlotIndex);
-    });
-}
-
 function applyMobileSingleSlotMode() {
     if (!document.body.classList.contains('mobile')) return;
     document.querySelectorAll('.character-slot').forEach((el, i) => {
         el.classList.toggle('own-slot', i === mySlotIndex);
     });
     document.body.classList.add('mobile-single-slot');
-    
-    // Show mobile color picker
-    const colorPicker = document.getElementById('mobile-color-picker');
-    if (isHost || connections.length > 0) {
-        colorPicker.classList.add('visible');
-        updateMobileColorPicker();
-    }
-    
     renderPlayersStrip();
 }
 window.applyMobileSingleSlotMode = applyMobileSingleSlotMode;
@@ -450,7 +425,7 @@ function updatePlayerChip(slotIndex, direction = 'fade') {
 }
 
 function colorizeChipImage(img, character, colorName) {
-    const cached = (window.characterImageCache?.[(character.genders ? character.genders[(playerSlots.find(s=>s.color===colorName)?.gender || 'male'] : character).img] || {})[colorName];
+    const cached = (window.characterImageCache?.[(character.genders ? character.genders[(playerSlots.find(s=>s.color===colorName)?.gender || 'male')]?.img : character.img)] || {})[colorName];
     if (cached) { img.src = cached; return; }
     processAndCacheImage(img, character, colorName).then(blobUrl => {
         if (blobUrl) {
@@ -462,4 +437,12 @@ function colorizeChipImage(img, character, colorName) {
             img.style.filter = `hue-rotate(${angle}deg)`;
         }
     });
+}
+
+function requestSlotSwitch(targetIndex) {
+    if (isHost) {
+        hostSwitchToSlot(targetIndex);
+    } else {
+        sendToHost({ type: 'slot_switch', targetIndex });
+    }
 }
