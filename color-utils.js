@@ -12,63 +12,28 @@ function isBluish(h, s, l, r, g, b) {
 }
 
 function isYellowish(h, s, l, r, g, b, y, imageHeight) {
-    // --- GUARDS (Exclude pixels) ---
-    // New positional guard: Define a zone where the staff and skin are.
-    // This allows us to be more selective with color guards.
-    const pixelIndex = (y * 1024) + (r+g+b)%1024; // A pseudo x for now.
-    const x = pixelIndex % 1024; // Assuming a width for calculation.
-    const imageWidth = 1024; // Assumed width from asset.
-    const isStaffZone = (x < imageWidth * 0.55) && (y < imageHeight * 0.75);
-
-    // Robe Guard: Exclude dark, low-saturation colors to protect the robes.
-    const isDarkGreyRobe = s < 0.25 && l < 0.45;
-    const isGreyish = (Math.max(r, g, b) - Math.min(r, g, b)) < 25 && l < 0.5;
-    if (isDarkGreyRobe || isGreyish) {
-        return false;
-    }
-    
-    // Staff Glow Guard: Exclude very bright, near-white colors.
-    if (l > 0.85 || (l > 0.75 && s < 0.5)) {
-        return false;
-    }
-
-    // Combined Staff/Skin Guard: Exclude brownish/skin-tone hues ONLY if they are inside the staff/skin zone.
-    if (isStaffZone) {
-        const isStaffOrSkinHue = h >= 15 && h <= 39;
-        const isStaffOrSkinSat = s > 0.25 && s < 0.65;
-        const isStaffOrSkinLight = l < 0.7 && l > 0.3;
-        if (isStaffOrSkinHue && isStaffOrSkinSat && isStaffOrSkinLight) {
+    // Skin Tone Guard: Exclude pixels that fall within typical skin tone ranges.
+    // We assume the face and hands are in the upper 60% of the image.
+    const isUpperBody = y < imageHeight * 0.6;
+    if (isUpperBody) {
+        const isSkinTone = (h >= 15 && h <= 45) && (s >= 0.25 && s <= 0.8) && (l >= 0.3 && l <= 0.9);
+        if (isSkinTone) {
             return false;
         }
     }
 
-    // --- SELECTION LOGIC (Include pixels) ---
-    
-    // Main Selection: Target the vibrant gold/yellow range.
-    const mainHueOK = (h >= 40 && h <= 55);
-    const mainSatOK = s > 0.28;
-    const mainLightOK = l > 0.25 && l < 0.85;
-    // Chroma check: Ensure yellow/gold is dominant (high R and G, low B).
+    // Hue check: Target yellows and oranges.
+    const hueOK = (h >= 35 && h <= 85);
+    // Chroma check: Ensure yellow/gold is dominant. Yellow is high R and G, low B.
     const yellowDominance = (r + g) / 2 - b;
-    const mainChromaOK = yellowDominance > 30;
+    const chromaOK = yellowDominance > 20;
+    // Saturation & Lightness checks: Avoid greys, blacks, whites.
+    const satOK = s > 0.20;
+    const lightOK = l > 0.15 && l < 0.95;
     
-    if (mainHueOK && mainSatOK && mainLightOK && mainChromaOK) {
-        return true;
-    }
+    const darkYellowGuard = (g > b && r > b) && (g > 50 && r > 50) && l < 0.45 && s > 0.2;
 
-    // Shadow/Dark Gold Selection: Target brownish golds like #805F3B and #5F4116.
-    // This is now safer because the staff zone is handled above.
-    const shadowHueOK = (h >= 25 && h < 40); // Broaden hue range for browns
-    const shadowSatOK = s > 0.30; // Capture more saturated shadows
-    const shadowLightOK = l > 0.15 && l < 0.5;
-    // R > B is important for browns, G > B is also typical.
-    const isBrownishGoldRgb = r > b && g > b && (r - b > 20);
-
-    if(shadowHueOK && shadowSatOK && shadowLightOK && isBrownishGoldRgb) {
-        return true;
-    }
-
-    return false;
+    return (hueOK && satOK && lightOK && chromaOK) || darkYellowGuard;
 }
 
 function isReddish(h, s, l, r, g, b, y, imageHeight) {

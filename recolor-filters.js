@@ -213,27 +213,7 @@ function selectiveRecolorWizard(img, targetHue, returnBlob = false) {
                         let h = (hsl.h + shift) % 360; 
                         let s = hsl.s, l = hsl.l;
                         
-                        let rgb;
-                        if (targetHue === 0) { // Darker Red
-                            h = 1; // Pure red hue
-                            s = Math.min(1, s * 1.3); // Boost saturation
-                            l = Math.max(0, l * 0.9);  // Darken slightly
-                            
-                            rgb = hslToRgb(h, s, l);
-                            
-                            // To make the red richer, we ensure it's dominant and other components are reduced.
-                            rgb.r = Math.min(255, rgb.r + 10);
-                            rgb.g = Math.max(0, rgb.g - 20);
-                            rgb.b = Math.max(0, rgb.b - 20);
-                        } else if (targetHue === 60) { // Special handling for yellow to make it pop
-                            h = 50; // A rich golden hue
-                            s = Math.min(1, s * 1.3); // Boost saturation
-                            l = Math.min(1, l * 1.1); // Brighten it up
-                            rgb = hslToRgb(h, s, l);
-                        } else {
-                           rgb = hslToRgb(h, s, l);
-                        }
-
+                        const rgb = hslToRgb(h, s, l);
                         p[i] = rgb.r; p[i+1] = rgb.g; p[i+2] = rgb.b;
                     }
                 }
