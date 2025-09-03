@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character Selection</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="preloader">
+        <div class="preloader-content">
+            <div class="preloader-spinner"></div>
+            <p>Loading Heroes...</p>
+        </div>
+    </div>
+
+    <div class="character-selection">
+        <h1 class="title">Choose Your Hero</h1>
+        <div id="players-strip" class="players-strip"></div>
+        <div class="characters-grid-container">
+            <div class="characters-grid">
+                <div class="character-slot" data-player="1" data-color="blue" data-character-index="0">
+                    <div class="character-frame">
+                        <div class="select-character-text">Select A Character</div>
+                        <div class="character-image-wrapper">
+                            <img src="/character1.png" alt="Warrior" class="character-image" data-base-hue="240">
+                        </div>
+                        <div class="character-stats">
+                            <div class="gender-toggle-container" style="visibility: hidden;">
+                                <button class="gender-toggle active" data-gender="male">M</button>
+                                <button class="gender-toggle" data-gender="female">F</button>
+                            </div>
+                            <div class="character-name-container">
+                                <button class="arrow left-arrow">◀</button>
+                                <span class="stat-label"><span class="character-name-text">Warrior</span></span>
+                                <button class="arrow right-arrow">▶</button>
+                            </div>
+                            <div class="stat-line strength">Strength: 9</div>
+                            <div class="stat-line speed">Speed: 5</div>
+                            <div class="stat-line magic">Magic: 2</div>
+                            <div class="stat-line armour">Armour: 8</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="character-slot" data-player="2" data-color="green" data-character-index="1">
+                    <div class="character-frame">
+                        <div class="select-character-text">Select A Character</div>
+                        <div class="character-image-wrapper">
+                            <img src="/character2.png" alt="Archer" class="character-image" data-base-hue="120">
+                        </div>
+                        <div class="character-stats">
+                            <div class="gender-toggle-container" style="visibility: hidden;">
+                                <button class="gender-toggle active" data-gender="male">M</button>
+                                <button class="gender-toggle" data-gender="female">F</button>
+                            </div>
+                            <div class="character-name-container">
+                                <button class="arrow left-arrow">◀</button>
+                                <span class="stat-label"><span class="character-name-text">Archer</span></span>
+                                <button class="arrow right-arrow">▶</button>
+                            </div>
+                             <div class="stat-line strength">Strength: 6</div>
+                             <div class="stat-line speed">Speed: 9</div>
+                             <div class="stat-line magic">Magic: 4</div>
+                             <div class="stat-line armour">Armour: 5</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="character-slot" data-player="3" data-color="yellow" data-character-index="2">
+                    <div class="character-frame">
+                        <div class="select-character-text">Select A Character</div>
+                        <div class="character-image-wrapper">
+                             <img src="/character3.png" alt="Wizard" class="character-image" data-base-hue="60">
+                        </div>
+                        <div class="character-stats">
+                             <div class="gender-toggle-container" style="visibility: hidden;">
+                                <button class="gender-toggle active" data-gender="male">M</button>
+                                <button class="gender-toggle" data-gender="female">F</button>
+                            </div>
+                             <div class="character-name-container">
+                                <button class="arrow left-arrow">◀</button>
+                                <span class="stat-label"><span class="character-name-text">Wizard</span></span>
+                                <button class="arrow right-arrow">▶</button>
+                            </div>
+                             <div class="stat-line strength">Strength: 3</div>
+                             <div class="stat-line speed">Speed: 6</div>
+                             <div class="stat-line magic">Magic: 10</div>
+                             <div class="stat-line armour">Armour: 3</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="character-slot" data-player="4" data-color="red" data-character-index="3">
+                    <div class="character-frame">
+                        <div class="select-character-text">Select A Character</div>
+                        <div class="character-image-wrapper">
+                            <img src="/character4.png" alt="Valkyrie" class="character-image" data-base-hue="0">
+                        </div>
+                        <div class="character-stats">
+                             <div class="gender-toggle-container" style="visibility: hidden;">
+                                <button class="gender-toggle active" data-gender="male">M</button>
+                                <button class="gender-toggle" data-gender="female">F</button>
+                            </div>
+                             <div class="character-name-container">
+                                <button class="arrow left-arrow">◀</button>
+                                <span class="stat-label"><span class="character-name-text">Valkyrie</span></span>
+                                <button class="arrow right-arrow">▶</button>
+                            </div>
+                            <div class="stat-line strength">Strength: 7</div>
+                            <div class="stat-line speed">Speed: 7</div>
+                            <div class="stat-line magic">Magic: 6</div>
+                            <div class="stat-line armour">Armour: 6</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    
+    <div id="start-overlay">
+        <div class="start-content">
+            <h2 class="start-title">Ancient Champions</h2>
+            <div class="game-mode-selection">
+                <button id="host-btn" class="mode-btn host-btn">Host Game</button>
+                <button id="scan-to-play-btn" class="mode-btn scan-btn">Scan To Join</button>
+                <button id="realtime-mode-btn" class="mode-btn realtime-btn disabled">Realtime Mode</button>
+                <p class="mode-description">Coming Soon</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="host-qr-display" class="host-qr-mini">
+        <canvas id="mini-qr-code"></canvas>
+    </div>
+
+    <div id="qr-code-overlay" class="qr-overlay hidden">
+        <div class="qr-content">
+            <h3>Scan this code to join the game</h3>
+            <canvas id="fullscreen-qr-code"></canvas>
+            <p>Your Host ID: <span id="peer-id-display"></span></p>
+            <button id="close-qr-overlay" class="close-btn">✕</button>
+        </div>
+    </div>
+
+    <div id="camera-scanner" class="camera-overlay hidden">
+        <div class="camera-content">
+            <h3>Scan QR Code to Join Game</h3>
+            <video id="camera-video" autoplay></video>
+            <canvas id="camera-canvas" style="display: none;"></canvas>
+            <button id="close-camera" class="close-btn">✕</button>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/peerjs@1.5.0/dist/peerjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="audio.js"></script>
+    <script src="characters.js"></script>
+    <script src="color-shader.js"></script>
+    <script src="ui.js"></script>
+    <script src="cursor.js"></script>
+    <script src="mobile.js"></script>
+    <script src="main.js"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
