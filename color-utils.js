@@ -12,6 +12,17 @@ function isBluish(h, s, l, r, g, b) {
 }
 
 function isYellowish(h, s, l, r, g, b, y, imageHeight) {
+    // Robe Guard: Exclude dark, low-saturation colors to protect the robes.
+    if (s < 0.25 && l < 0.45) {
+        return false;
+    }
+    // Also check for greyish colors by component difference.
+    const maxComp = Math.max(r, g, b);
+    const minComp = Math.min(r, g, b);
+    if ((maxComp - minComp) < 20 && l < 0.5) {
+        return false;
+    }
+    
     // Skin Tone Guard: Exclude pixels that fall within typical skin tone ranges.
     // This is refined to be more specific to avoid accidentally filtering out gold/yellow tones.
     const isUpperBody = y < imageHeight * 0.65;
@@ -39,13 +50,13 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
     const hueOK = (h >= 35 && h <= 90);
     // Chroma check: Ensure yellow/gold is dominant. Yellow is high R and G, low B.
     const yellowDominance = (r + g) / 2 - b;
-    const chromaOK = yellowDominance > 25;
+    const chromaOK = yellowDominance > 30; // Increased threshold for more selective yellow
     // Saturation & Lightness checks: Avoid greys, blacks, whites.
-    const satOK = s > 0.25;
+    const satOK = s > 0.30; // Increased threshold
     const lightOK = l > 0.20 && l < 0.98;
     
     // A specific guard for dark, less saturated gold/brass colors.
-    const darkYellowGuard = (g > b && r > b) && (g > 60 && r > 60) && l < 0.55 && s > 0.2;
+    const darkYellowGuard = (g > b && r > b) && (g > 60 && r > 60) && l < 0.55 && s > 0.25;
 
     return (hueOK && satOK && lightOK && chromaOK) || darkYellowGuard;
 }

@@ -224,6 +224,11 @@ function selectiveRecolorWizard(img, targetHue, returnBlob = false) {
                             // Reduce green and blue components to ensure a deep, pure red
                             rgb.g = Math.max(0, rgb.g - 15);
                             rgb.b = Math.max(0, rgb.b - 15);
+                        } else if (targetHue === 60) { // Special handling for yellow to make it pop
+                            h = 50; // A rich golden hue
+                            s = Math.min(1, s * 1.3); // Boost saturation
+                            l = Math.min(1, l * 1.1); // Brighten it up
+                            rgb = hslToRgb(h, s, l);
                         } else {
                            rgb = hslToRgb(h, s, l);
                         }
