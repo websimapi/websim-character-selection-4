@@ -129,15 +129,17 @@ function updateCharacterSlot(slot, character, direction) {
         nameText.classList.remove('fade-out');
     }, ANIMATION_DURATION / 2);
 
+    // If slot is empty: remove any hidden character image and animate only the skull sliding out
     const wasEmpty = slot.classList.contains('empty');
     if (wasEmpty) {
         slot.classList.remove('empty');
         if (oldImage) { if (oldImage.dataset.blobUrl) URL.revokeObjectURL(oldImage.dataset.blobUrl); oldImage.remove(); }
         const skull = document.createElement('img');
-        skull.src = '/skull.png'; skull.className = 'skull-flyout ' + (direction === 'right' ? 'slide-out-to-left' : 'slide-out-to-right');
+        skull.src = '/skull.png';
+        skull.className = 'skull-flyout ' + (direction === 'right' ? 'slide-out-to-left' : 'slide-out-to-right');
         imageWrapper.appendChild(skull);
         setTimeout(()=> skull.remove(), ANIMATION_DURATION);
-        oldImage = null;
+        oldImage = null; // ensure no character image slides out
     }
 }
 
