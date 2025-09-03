@@ -1,8 +1,9 @@
 // Character-specific recoloring logic
 import Color from 'color';
+import { rgbToHsl, hslToRgb, isBluish, isGreenish, isReddish, isYellowish } from './color-utils.js';
 
 
-function selectiveRecolorWarrior(img, targetHue, returnBlob = false) {
+export function selectiveRecolorWarrior(img, targetHue, returnBlob = false) {
     const shift = ((targetHue - 240) + 360) % 360;
     return new Promise((resolve) => {
         const process = () => {
@@ -82,7 +83,7 @@ function selectiveRecolorWarrior(img, targetHue, returnBlob = false) {
     });
 }
 
-function selectiveRecolorArcher(img, targetHue, returnBlob = false) {
+export function selectiveRecolorArcher(img, targetHue, returnBlob = false) {
     const shift = ((targetHue - 120) + 360) % 360;
     return new Promise((resolve) => {
         const process = () => {
@@ -130,7 +131,7 @@ function selectiveRecolorArcher(img, targetHue, returnBlob = false) {
     });
 }
 
-function selectiveRecolorValkyrie(img, targetHue, returnBlob = false) {
+export function selectiveRecolorValkyrie(img, targetHue, returnBlob = false) {
     const shift = ((targetHue - 0) + 360) % 360;
     return new Promise((resolve) => {
         const process = () => {
@@ -194,7 +195,7 @@ function selectiveRecolorValkyrie(img, targetHue, returnBlob = false) {
     });
 }
 
-function selectiveRecolorWizard(img, targetHue, returnBlob = false) {
+export function selectiveRecolorWizard(img, targetHue, returnBlob = false) {
     const shift = ((targetHue - 60) + 360) % 360;
     return new Promise((resolve) => {
         const process = () => {

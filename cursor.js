@@ -1,5 +1,5 @@
 // Custom cursor system
-function initializeRelicCursor() {
+export function initializeRelicCursor() {
     const fine = window.matchMedia('(pointer: fine)').matches;
     console.info('[RelicCursor] Pointer fine:', fine);
     if (!fine) { console.info('[RelicCursor] Using system cursor (coarse pointer).'); return; }

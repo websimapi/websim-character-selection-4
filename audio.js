@@ -1,6 +1,6 @@
 // Audio system management
 let audioContext;
-let stoneShiftBuffer;
+export let stoneShiftBuffer;
 let backgroundMusicBuffer;
 let isMusicPlaying = false;
 let stoneShiftLoading = false;
@@ -20,7 +20,7 @@ async function loadSound(url) {
 }
 
 // Function to play a sound
-function playSound(buffer) {
+export function playSound(buffer) {
     if (!audioContext) return;
     if (!buffer) {
         if (!stoneShiftLoading) {
@@ -72,7 +72,7 @@ function playBackgroundMusic() {
 }
 
 // Initialize audio system with user interaction
-async function initializeAudio() {
+export async function initializeAudio() {
     try {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();

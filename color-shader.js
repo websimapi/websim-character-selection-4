@@ -1,5 +1,7 @@
 // Color shader and recoloring system
-const slotColors = {
+import { selectiveRecolorWarrior, selectiveRecolorArcher, selectiveRecolorValkyrie, selectiveRecolorWizard } from './recolor-filters.js';
+
+export const slotColors = {
     blue: 240,
     green: 120,
     yellow: 60,
@@ -7,13 +9,13 @@ const slotColors = {
 };
 
 // Apply CSS filter to shift image color
-function applyColorShader(slot) {
+export function applyColorShader(slot) {
     const image = slot.querySelector('.character-image');
     const slotColorName = slot.dataset.color;
     applyColorShaderToImage(image, slotColorName);
 }
 
-function applyColorShaderToImage(image, slotColorName) {
+export function applyColorShaderToImage(image, slotColorName) {
     if (!image) return Promise.resolve();
 
     return new Promise(resolve => {
@@ -35,7 +37,7 @@ function applyColorShaderToImage(image, slotColorName) {
     });
 }
 
-function processAndCacheImage(img, characterData, slotColorName) {
+export function processAndCacheImage(img, characterData, slotColorName) {
     const baseHue = parseInt(characterData.baseHue, 10);
     const targetHue = slotColors[slotColorName];
 

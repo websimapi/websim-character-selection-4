@@ -1,7 +1,12 @@
 // Networking and connection management, extracted from ui.js and main.js
+import { initializeAudio } from './audio.js';
+import { playerSlots, connections, peer, isHost, mySlotIndex, gameMode, peerId } from './main.js';
+import { characters, updateCharacterSlot } from './characters.js';
+import { updateCharacterSlotsUI } from './main.js';
+import { updateMobileSlotPicker, applyMobileSingleSlotMode, updatePlayerChip } from './mobile-ui.js';
 
 // From ui.js
-function initializeStartOverlay() {
+export function initializeStartOverlay() {
     const startOverlay = document.getElementById('start-overlay');
     const hostBtn = document.getElementById('host-btn');
     const scanBtn = document.getElementById('scan-qr-btn');
@@ -97,8 +102,8 @@ function initializeStartOverlay() {
 }
 
 function startHosting() {
-    gameMode = 'scan';
-    isHost = true;
+    window.gameMode = 'scan';
+    window.isHost = true;
     
     // Hide start overlay
     document.getElementById('start-overlay').classList.add('hidden');
@@ -109,8 +114,8 @@ function startHosting() {
     // Initialize audio
     initializeAudio();
     
-    console.log('Started Scan to Play mode as host with ID:', peerId);
-    mySlotIndex = 0;
+    console.log('Started Scan to Play mode as host with ID:', window.peerId);
+    window.mySlotIndex = 0;
     
     // Update the UI to show empty slots correctly
     updateCharacterSlotsUI();
@@ -177,13 +182,13 @@ function stopCameraScanner(stream) {
 
 function joinGame(hostId) {
     console.log('Attempting to join game with host:', hostId);
-    isHost = false;
+    window.isHost = false;
     
-    const conn = peer.connect(hostId);
+    const conn = window.peer.connect(hostId);
     
     conn.on('open', () => {
         console.log('Connected to host:', hostId);
-        connections = [conn]; // Client only has one connection (to host)
+        window.connections = [conn]; // Client only has one connection (to host)
         
         // Hide start overlay
         document.getElementById('start-overlay').classList.add('hidden');
@@ -207,22 +212,22 @@ function handleHostMessage(data) {
     switch (data.type) {
         case 'slot_assignment':
             console.log('Assigned to slot:', data.slot);
-            playerSlots = data.playerSlots;
+            window.playerSlots = data.playerSlots;
             updateCharacterSlotsUI(); // Full sync on first join
-            mySlotIndex = data.slot;
+            window.mySlotIndex = data.slot;
             applyMobileSingleSlotMode();
             break;
             
         case 'player_slots_update':
             // Used for players joining/leaving
-            playerSlots = data.playerSlots;
+            window.playerSlots = data.playerSlots;
             updateCharacterSlotsUI();
             updateMobileSlotPicker();
             break;
             
         case 'character_change':
             if (slotElement) {
-                playerSlots[data.slotIndex].characterIndex = data.characterIndex;
+                window.playerSlots[data.slotIndex].characterIndex = data.characterIndex;
                 updateCharacterSlot(slotElement, characters[data.characterIndex], data.direction);
             }
             updatePlayerChip(data.slotIndex, data.direction);
@@ -230,12 +235,12 @@ function handleHostMessage(data) {
             
         case 'gender_change':
             if (slotElement) {
-                playerSlots[data.slotIndex].gender = data.gender;
+                window.playerSlots[data.slotIndex].gender = data.gender;
                 slotElement.dataset.archerGender = data.gender;
                 slotElement.querySelectorAll('.gender-toggle').forEach(t => {
                     t.classList.toggle('active', t.dataset.gender === data.gender);
                 });
-                updateCharacterSlot(slotElement, characters[playerSlots[data.slotIndex].characterIndex], 'fade');
+                updateCharacterSlot(slotElement, characters[window.playerSlots[data.slotIndex].characterIndex], 'fade');
             }
             updatePlayerChip(data.slotIndex, 'fade');
             break;
@@ -243,26 +248,26 @@ function handleHostMessage(data) {
 }
 
 // From main.js
-function initializePeerJS() {
-    peer = new Peer();
+export function initializePeerJS() {
+    window.peer = new Peer();
     
-    peer.on('open', (id) => {
-        peerId = id;
+    window.peer.on('open', (id) => {
+        window.peerId = id;
         console.log('PeerJS initialized with ID:', id);
         generateHostQRCodes(id);
     });
 
-    peer.on('connection', (conn) => {
+    window.peer.on('connection', (conn) => {
         console.log('Incoming connection:', conn.peer);
         handleIncomingConnection(conn);
     });
 
-    peer.on('error', (error) => {
+    window.peer.on('error', (error) => {
         console.error('PeerJS error:', error);
     });
 }
 
-function generateHostQRCodes(id) {
+export function generateHostQRCodes(id) {
     // Generate mini QR code for in-game display
     new QRious({
         element: document.getElementById('mini-qr-code'),
@@ -286,14 +291,14 @@ function generateHostQRCodes(id) {
     document.getElementById('peer-id-display').textContent = id;
 }
 
-function handleIncomingConnection(conn) {
-    connections.push(conn);
+export function handleIncomingConnection(conn) {
+    window.connections.push(conn);
     
     conn.on('open', () => {
         console.log('Connection established with:', conn.peer);
         
         // Assign player to available slot
-        const availableSlot = playerSlots.find(slot => !slot.occupied);
+        const availableSlot = window.playerSlots.find(slot => !slot.occupied);
         if (availableSlot) {
             availableSlot.occupied = true;
             availableSlot.playerId = conn.peer;
@@ -301,14 +306,14 @@ function handleIncomingConnection(conn) {
             // Send slot assignment to new player
             conn.send({
                 type: 'slot_assignment',
-                slot: playerSlots.indexOf(availableSlot),
-                playerSlots: playerSlots
+                slot: window.playerSlots.indexOf(availableSlot),
+                playerSlots: window.playerSlots
             });
             
             // Broadcast updated player slots to all clients
             broadcastToClients({
                 type: 'player_slots_update',
-                playerSlots: playerSlots
+                playerSlots: window.playerSlots
             });
             
             updateCharacterSlotsUI();
@@ -325,20 +330,20 @@ function handleIncomingConnection(conn) {
     });
 }
 
-function sendToHost(message) {
+export function sendToHost(message) {
     // Client function to send data to the host
-    if (!isHost && connections.length > 0 && connections[0].open) {
-        connections[0].send(message);
+    if (!window.isHost && window.connections.length > 0 && window.connections[0].open) {
+        window.connections[0].send(message);
     }
 }
 
 function handleClientMessage(conn, data) {
-    const playerSlot = playerSlots.find(slot => slot.playerId === conn.peer);
+    const playerSlot = window.playerSlots.find(slot => slot.playerId === conn.peer);
     if (!playerSlot) {
         console.warn('Received message from unassigned player:', conn.peer);
         return;
     }
-    const slotIndex = playerSlots.indexOf(playerSlot);
+    const slotIndex = window.playerSlots.indexOf(playerSlot);
     const oldCharacterIndex = playerSlot.characterIndex;
 
     switch (data.type) {
@@ -388,8 +393,8 @@ function handleClientMessage(conn, data) {
     }
 }
 
-function broadcastToClients(message) {
-    connections.forEach(conn => {
+export function broadcastToClients(message) {
+    window.connections.forEach(conn => {
         if (conn.open) {
             conn.send(message);
         }
@@ -397,48 +402,48 @@ function broadcastToClients(message) {
 }
 
 function removePlayer(playerId) {
-    const slot = playerSlots.find(slot => slot.playerId === playerId);
+    const slot = window.playerSlots.find(slot => slot.playerId === playerId);
     if (slot) {
         slot.occupied = false;
         slot.playerId = null;
         
         broadcastToClients({
             type: 'player_slots_update',
-            playerSlots: playerSlots
+            playerSlots: window.playerSlots
         });
         
         updateCharacterSlotsUI();
     }
     
-    connections = connections.filter(conn => conn.peer !== playerId);
+    window.connections = window.connections.filter(conn => conn.peer !== playerId);
 }
 
 function hostAssignClientToSlot(peerIdToMove, targetIndex) {
-    const target = playerSlots[targetIndex];
+    const target = window.playerSlots[targetIndex];
     if (!target || target.occupied) return;
-    const current = playerSlots.find(s => s.playerId === peerIdToMove);
+    const current = window.playerSlots.find(s => s.playerId === peerIdToMove);
     if (!current) return;
     target.occupied = true; target.playerId = peerIdToMove; target.characterIndex = current.characterIndex; target.gender = current.gender;
     current.occupied = false; current.playerId = null;
-    broadcastToClients({ type: 'player_slots_update', playerSlots });
-    const conn = connections.find(c => c.peer === peerIdToMove);
+    broadcastToClients({ type: 'player_slots_update', playerSlots: window.playerSlots });
+    const conn = window.connections.find(c => c.peer === peerIdToMove);
     if (conn && conn.open) {
-        conn.send({ type: 'slot_assignment', slot: targetIndex, playerSlots });
+        conn.send({ type: 'slot_assignment', slot: targetIndex, playerSlots: window.playerSlots });
     }
     updateCharacterSlotsUI();
 }
 
-function hostSwitchToSlot(targetIndex) {
-    if (!isHost) return;
-    const target = playerSlots[targetIndex];
+export function hostSwitchToSlot(targetIndex) {
+    if (!window.isHost) return;
+    const target = window.playerSlots[targetIndex];
     if (!target || target.occupied) return;
-    const prevIndex = mySlotIndex;
-    const current = playerSlots[mySlotIndex];
+    const prevIndex = window.mySlotIndex;
+    const current = window.playerSlots[window.mySlotIndex];
     target.occupied = true; target.playerId = 'host'; target.characterIndex = current.characterIndex; target.gender = current.gender;
     current.occupied = false; current.playerId = null;
-    mySlotIndex = targetIndex;
-    suppressUIAnimationOnce = true;
-    broadcastToClients({ type: 'player_slots_update', playerSlots });
+    window.mySlotIndex = targetIndex;
+    window.suppressUIAnimationOnce = true;
+    broadcastToClients({ type: 'player_slots_update', playerSlots: window.playerSlots });
     updateCharacterSlotsUI();
     const prevEl = document.querySelector(`.character-slot[data-player="${prevIndex + 1}"]`);
     if (prevEl) {

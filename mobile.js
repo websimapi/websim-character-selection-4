@@ -1,5 +1,5 @@
 // Mobile detection and optimization
-function initializeMobile() {
+export function initializeMobile() {
     const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
     if (isMobile) {

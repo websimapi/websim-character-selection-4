@@ -1,6 +1,6 @@
 // Color conversion and detection utilities
 
-function isBluish(h, s, l, r, g, b) {
+export function isBluish(h, s, l, r, g, b) {
     const d = Math.abs(h - 240); const hueDist = Math.min(d, 360 - d);
     const hueOK = hueDist <= 65;
     const blueDominance = b - Math.max(r, g);
@@ -112,7 +112,7 @@ function isGreenish(h, s, l, r, g, b) {
     return ((hueOK && satOK && lightOK) || chromaOK || darkGreenGuard);
 }
 
-function rgbToHsl(r, g, b) {
+export function rgbToHsl(r, g, b) {
     r/=255; g/=255; b/=255;
     const max = Math.max(r,g,b), min = Math.min(r,g,b);
     let h, s, l = (max+min)/2;
@@ -130,7 +130,7 @@ function rgbToHsl(r, g, b) {
     return { h, s, l };
 }
 
-function hslToRgb(h, s, l) {
+export function hslToRgb(h, s, l) {
     const c = (1 - Math.abs(2*l - 1)) * s;
     const hp = h / 60; const x = c * (1 - Math.abs((hp % 2) - 1));
     let r1=0,g1=0,b1=0;
