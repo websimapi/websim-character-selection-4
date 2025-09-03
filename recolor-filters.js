@@ -205,17 +205,14 @@ function selectiveRecolorWizard(img, targetHue, returnBlob = false) {
                     const r = p[i], g = p[i+1], b = p[i+2], a = p[i+3];
                     if (a < 5) continue;
                     
-                    // Make near-black background transparent
-                    if (r < 20 && g < 20 && b < 20 && a > 200) {
-                        p[i+3] = 0; // Set alpha to transparent
-                        continue;
-                    }
-
                     const pixelIndex = i / 4;
-                    const y = Math.floor(pixelIndex / c.width);
+                    const xPos = pixelIndex % c.width; const y = Math.floor(pixelIndex / c.width);
+
+                    // Make very dark near-black tones (e.g., ~#0F0C02) transparent
+                    if ((r < 26 && g < 22 && b < 12) || (rgbToHsl(r,g,b).l < 0.06 && Math.max(r,g,b) < 32)) { p[i+3] = 0; continue; }
 
                     const hsl = rgbToHsl(r, g, b);
-                    if (isYellowish(hsl.h, hsl.s, hsl.l, r, g, b, y, c.height)) {
+                    if (isYellowish(hsl.h, hsl.s, hsl.l, r, g, b, xPos, c.width, y, c.height)) {
                         let h = (hsl.h + shift) % 360; 
                         let s = hsl.s, l = hsl.l;
                         

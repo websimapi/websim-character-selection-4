@@ -11,11 +11,9 @@ function isBluish(h, s, l, r, g, b) {
     return ((hueOK && satOK && lightOK) || chromaOK || darkBlueGuard);
 }
 
-function isYellowish(h, s, l, r, g, b, y, imageHeight) {
+function isYellowish(h, s, l, r, g, b, x, imageWidth, y, imageHeight) {
     // Robe Guard: Exclude dark, low-saturation colors to protect the robes.
-    if (s < 0.25 && l < 0.45) {
-        return false;
-    }
+    if (s < 0.25 && l < 0.45) return false;
     // Also check for greyish colors by component difference.
     const maxComp = Math.max(r, g, b);
     const minComp = Math.min(r, g, b);
@@ -52,8 +50,7 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
         }
     }
 
-    // Main Selection Logic
-    // Hue check: Target a specific range of gold/yellow.
+    // Main Selection Logic (gold/yellow)
     const hueOK = (h >= 40 && h <= 55);
     // Chroma check: Ensure yellow/gold is dominant. Yellow is high R and G, low B.
     const yellowDominance = (r + g) / 2 - b;
@@ -65,10 +62,12 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
     // Guard for darker, less saturated gold/brass colors found on the trim.
     const darkYellowGuard = (g > b && r > b) && l < 0.55 && s > 0.25 && hueOK;
 
-    // Special case for brownish-yellow trim like #805F3B (h:31, s:0.37, l:0.36)
-    const isBrownishYellowTrim = (h >= 28 && h <= 35) && (s >= 0.3 && s <= 0.5) && (l >= 0.3 && l <= 0.45);
+    // Accept brown-gold wardrobe tones (e.g., #805F3B, #9C8345, #AD8A47) but only near center to avoid staff
+    const isCenter = x > imageWidth * 0.22 && x < imageWidth * 0.78;
+    const brownGoldHue = h >= 28 && h <= 45;
+    const brownGoldOK = isCenter && brownGoldHue && s >= 0.22 && s <= 0.65 && l >= 0.28 && l <= 0.62 && (r > b && g > b);
 
-    return (hueOK && satOK && lightOK && chromaOK) || darkYellowGuard || isBrownishYellowTrim;
+    return (hueOK && satOK && lightOK && chromaOK) || darkYellowGuard || brownGoldOK;
 }
 
 function isReddish(h, s, l, r, g, b, y, imageHeight) {
