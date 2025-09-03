@@ -1,6 +1,6 @@
 // Color conversion and detection utilities
 
-export function isBluish(h, s, l, r, g, b) {
+function isBluish(h, s, l, r, g, b) {
     const d = Math.abs(h - 240); const hueDist = Math.min(d, 360 - d);
     const hueOK = hueDist <= 65;
     const blueDominance = b - Math.max(r, g);
@@ -28,13 +28,6 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
         return false;
     }
 
-    // Staff Guard: Exclude brownish colors that might be on the staff.
-    // Brown hues are in the orange/yellow range, but less saturated.
-    // The staff's brown is around hue 25-35. The gold trim is hue 45-55.
-    if (h > 20 && h < 40 && s < 0.6) {
-        return false;
-    }
-
     // Skin Tone Guard: Exclude pixels that fall within typical skin tone ranges.
     // This is refined to be more specific to avoid accidentally filtering out gold/yellow tones.
     const isUpperBody = y < imageHeight * 0.65;
@@ -56,13 +49,13 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
     }
 
     // Hue check: Target yellows and golds, avoiding greenish yellows.
-    const hueOK = (h >= 42 && h <= 70);
+    const hueOK = (h >= 40 && h <= 70);
     // Chroma check: Ensure yellow/gold is dominant. Yellow is high R and G, low B.
     const yellowDominance = (r + g) / 2 - b;
-    const chromaOK = yellowDominance > 25; 
+    const chromaOK = yellowDominance > 25; // Lowered threshold slightly for colors like #AA9360
     // Saturation & Lightness checks: Avoid greys, blacks, whites.
-    const satOK = s > 0.25; 
-    const lightOK = l > 0.20 && l < 0.90; 
+    const satOK = s > 0.25; // Lowered from 0.30 to include #AA9360 (s=0.29)
+    const lightOK = l > 0.20 && l < 0.90; // Raised upper bound to catch brighter golds
     
     // A specific guard for dark, less saturated gold/brass colors.
     const darkYellowGuard = (g > b && r > b) && (g > 60 && r > 60) && l < 0.55 && s > 0.20;
@@ -112,7 +105,7 @@ function isGreenish(h, s, l, r, g, b) {
     return ((hueOK && satOK && lightOK) || chromaOK || darkGreenGuard);
 }
 
-export function rgbToHsl(r, g, b) {
+function rgbToHsl(r, g, b) {
     r/=255; g/=255; b/=255;
     const max = Math.max(r,g,b), min = Math.min(r,g,b);
     let h, s, l = (max+min)/2;
@@ -130,7 +123,7 @@ export function rgbToHsl(r, g, b) {
     return { h, s, l };
 }
 
-export function hslToRgb(h, s, l) {
+function hslToRgb(h, s, l) {
     const c = (1 - Math.abs(2*l - 1)) * s;
     const hp = h / 60; const x = c * (1 - Math.abs((hp % 2) - 1));
     let r1=0,g1=0,b1=0;

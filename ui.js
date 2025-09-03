@@ -1,15 +1,10 @@
 // UI interaction management
-import { characters } from './characters.js';
-import { applyColorShader } from './color-shader.js';
-import { updateCharacterSlot } from './characters.js';
-import { broadcastToClients, sendToHost, hostSwitchToSlot } from './connection.js';
-
-export function initializeCharacterSelection() {
+function initializeCharacterSelection() {
     const characterSlots = document.querySelectorAll('.character-slot');
 
     characterSlots.forEach((slot, index) => {
         // Initial setup
-        const slotData = window.playerSlots[index];
+        const slotData = playerSlots[index];
         if (!slotData.occupied) {
             slot.classList.add('empty');
             // ensure skull overlay exists for empty slots on load
@@ -41,9 +36,9 @@ export function initializeCharacterSelection() {
             let currentIndex = parseInt(slot.dataset.characterIndex, 10);
             currentIndex = (currentIndex - 1 + characters.length) % characters.length;
             
-            if (window.isHost) {
+            if (isHost) {
                 updateCharacterSlot(slot, characters[currentIndex], 'left');
-                window.playerSlots[index].characterIndex = currentIndex;
+                playerSlots[index].characterIndex = currentIndex;
                 broadcastToClients({ type: 'character_change', slotIndex: index, characterIndex: currentIndex, direction: 'left' });
             } else {
                 slot.querySelectorAll('.arrow, .gender-toggle').forEach(el => el.disabled = true);
@@ -57,9 +52,9 @@ export function initializeCharacterSelection() {
             let currentIndex = parseInt(slot.dataset.characterIndex, 10);
             currentIndex = (currentIndex + 1) % characters.length;
             
-            if (window.isHost) {
+            if (isHost) {
                 updateCharacterSlot(slot, characters[currentIndex], 'right');
-                window.playerSlots[index].characterIndex = currentIndex;
+                playerSlots[index].characterIndex = currentIndex;
                 broadcastToClients({ type: 'character_change', slotIndex: index, characterIndex: currentIndex, direction: 'right' });
             } else {
                 slot.querySelectorAll('.arrow, .gender-toggle').forEach(el => el.disabled = true);
@@ -76,11 +71,11 @@ export function initializeCharacterSelection() {
                 const newGender = toggle.dataset.gender;
                 if (slot.dataset.archerGender === newGender) return; // No change
 
-                if (window.isHost) {
+                if (isHost) {
                     slot.dataset.archerGender = newGender;
                     genderToggles.forEach(t => t.classList.toggle('active', t.dataset.gender === newGender));
                     updateCharacterSlot(slot, characters[parseInt(slot.dataset.characterIndex, 10)], 'fade');
-                    window.playerSlots[index].gender = newGender;
+                    playerSlots[index].gender = newGender;
                     broadcastToClients({ type: 'gender_change', slotIndex: index, gender: newGender });
                 } else {
                     slot.querySelectorAll('.arrow, .gender-toggle').forEach(el => el.disabled = true);
@@ -93,7 +88,7 @@ export function initializeCharacterSelection() {
         slot.addEventListener('click', () => {
             const finePointer = window.matchMedia('(pointer: fine)').matches;
             if (!finePointer) return;
-            if (window.playerSlots[index]?.occupied) return;
+            if (playerSlots[index]?.occupied) return;
             requestSlotSwitch(index);
         });
     });
@@ -108,7 +103,7 @@ function setupMobileSlotPicker() {
     picker.querySelectorAll('.slot-pill').forEach(btn => {
         btn.addEventListener('click', () => {
             const idx = parseInt(btn.dataset.slot, 10);
-            if (window.playerSlots[idx]?.occupied) return;
+            if (playerSlots[idx]?.occupied) return;
             requestSlotSwitch(idx);
         });
     });
@@ -120,19 +115,19 @@ function updateMobileSlotPicker() {
     if (!picker) return;
     picker.querySelectorAll('.slot-pill').forEach(btn => {
         const idx = parseInt(btn.dataset.slot, 10);
-        btn.classList.toggle('occupied', !!window.playerSlots[idx]?.occupied);
+        btn.classList.toggle('occupied', !!playerSlots[idx]?.occupied);
     });
 }
 
 function canControlSlot(slotIndex) {
     // Host can control any slot; clients only their assigned slot.
-    const slotData = window.playerSlots[slotIndex];
-    if (window.isHost) return true;
-    return slotData.occupied && slotData.playerId === window.peerId;
+    const slotData = playerSlots[slotIndex];
+    if (isHost) return true;
+    return slotData.occupied && slotData.playerId === peerId;
 }
 
 function requestSlotSwitch(targetIndex) {
-    if (window.isHost) {
+    if (isHost) {
         hostSwitchToSlot(targetIndex);
     } else {
         sendToHost({ type: 'slot_switch', targetIndex });

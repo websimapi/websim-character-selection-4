@@ -1,36 +1,28 @@
 // Main initialization and coordination
-import { initializeMobile } from './mobile.js';
-import { initializeRelicCursor } from './cursor.js';
-import { preloadAllCharacterImages, characters } from './characters.js';
-import { initializeCharacterSelection } from './ui.js';
-import { initializeStartOverlay, handleIncomingConnection, broadcastToClients, handleClientMessage, hostSwitchToSlot, hostAssignClientToSlot, generateHostQRCodes } from './connection.js';
-import { renderPlayersStrip } from './mobile-ui.js';
-import { updateCharacterSlot } from './characters.js';
+// removed character data - now in characters.js
+// removed WebAudio setup and sound functions - now in audio.js  
+// removed color shader functions - now in color-shader.js
+// removed updateCharacterSlot() function - now in characters.js
+// removed initializeCharacterSelection() function - now in ui.js
+// removed forceLandscape() function - now in mobile.js
+// removed initializeStartOverlay() function - now in ui.js
+// removed initializeRelicCursor() function - now in cursor.js
+// removed preprocessCharacters() function - now in characters.js
 
 let preprocessPromise = null;
-export let peer = null;
-export let peerId = null;
-export let connections = [];
-export let isHost = false;
-export let gameMode = null; // 'scan' or 'realtime'
-export let mySlotIndex = 0;
-export let playerSlots = [
+let peer = null;
+let peerId = null;
+let connections = [];
+let isHost = false;
+let gameMode = null; // 'scan' or 'realtime'
+let mySlotIndex = 0;
+let playerSlots = [
     { occupied: true, color: 'blue', characterIndex: 0, playerId: 'host', gender: 'male' }, // Player 1 (host)
     { occupied: false, color: 'green', characterIndex: 1, playerId: null, gender: 'male' }, // Player 2
     { occupied: false, color: 'yellow', characterIndex: 2, playerId: null, gender: 'male' }, // Player 3
     { occupied: false, color: 'red', characterIndex: 3, playerId: null, gender: 'male' }  // Player 4
 ];
-export let suppressUIAnimationOnce = false;
-
-// make state global for other modules for now
-window.peer = peer;
-window.peerId = peerId;
-window.connections = connections;
-window.isHost = isHost;
-window.gameMode = gameMode;
-window.mySlotIndex = mySlotIndex;
-window.playerSlots = playerSlots;
-window.suppressUIAnimationOnce = suppressUIAnimationOnce;
+let suppressUIAnimationOnce = false;
 
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
@@ -57,8 +49,6 @@ function initializePeerJS() {
     
     peer.on('open', (id) => {
         peerId = id;
-        window.peer = peer;
-        window.peerId = peerId;
         console.log('PeerJS initialized with ID:', id);
         generateHostQRCodes(id);
     });
@@ -222,10 +212,9 @@ function removePlayer(playerId) {
     }
     
     connections = connections.filter(conn => conn.peer !== playerId);
-    window.connections = connections;
 }
 
-export function updateCharacterSlotsUI() {
+function updateCharacterSlotsUI() {
     const slots = document.querySelectorAll('.character-slot');
     slots.forEach((slot, index) => {
         const playerSlot = playerSlots[index];
@@ -283,7 +272,6 @@ export function updateCharacterSlotsUI() {
         }
     });
     suppressUIAnimationOnce = false;
-    window.suppressUIAnimationOnce = suppressUIAnimationOnce;
     if (typeof renderPlayersStrip === 'function') renderPlayersStrip();
 }
 
