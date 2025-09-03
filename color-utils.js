@@ -17,12 +17,17 @@ function isYellowish(h, s, l, r, g, b, y, imageHeight) {
         const isSkinTone = (h >= 10 && h <= 55) && (s >= 0.22 && s <= 0.8) && (l >= 0.28 && l <= 0.92);
         if (isSkinTone) return false;
     }
+    // Explicitly exclude near-white/grey (beard, highlights)
     if (s < 0.15 && l > 0.78) return false;
-    const hueOK = (h >= 44 && h <= 56);
-    const satOK = (s >= 0.18 && s <= 0.42);
-    const lightOK = (l >= 0.45 && l <= 0.72);
-    const nearRef = isNearRefYellow(r, g, b);
-    return (hueOK && satOK && lightOK && nearRef);
+
+    const hueOK = (h >= 42 && h <= 75); // tighter golden band
+    const yellowDominance = (r + g) / 2 - b;
+    const chromaOK = yellowDominance > 28 && r > 70 && g > 70; // stronger dominance
+    const satOK = s > 0.22;
+    const lightOK = l > 0.18 && l < 0.85;
+
+    const darkYellowGuard = (g > b && r > b) && (g > 50 && r > 50) && l < 0.45 && s > 0.22;
+    return (hueOK && satOK && lightOK && chromaOK) || darkYellowGuard;
 }
 
 function isReddish(h, s, l, r, g, b, y, imageHeight) {
@@ -97,14 +102,4 @@ function hslToRgb(h, s, l) {
     else { r1=c; b1=x; }
     const m = l - c/2;
     return { r: Math.round((r1+m)*255), g: Math.round((g1+m)*255), b: Math.round((b1+m)*255) };
-}
-
-function isNearRefYellow(r, g, b) {
-    const rr = r / 255, gg = g / 255, bb = b / 255;
-    const gOverR = gg / Math.max(0.001, rr);
-    const bOverR = bb / Math.max(0.001, rr);
-    const ratioOK = (gOverR >= 0.86 && gOverR <= 0.96) && (bOverR >= 0.55 && bOverR <= 0.75);
-    const dr = r - 179, dg = g - 163, db = b - 118;
-    const distSq = dr*dr + dg*dg + db*db;
-    return ratioOK && distSq <= 5200; // ~sqrt≈72 tolerance
 }
