@@ -271,7 +271,6 @@
 }
 
 .character-slot.empty .character-image-wrapper {
-    background: url('/skull.png') center/contain no-repeat;
     opacity: 0.3;
 }
 
@@ -282,3 +281,12 @@
 .character-slot.empty .select-character-text {
     opacity: 0.5;
 }
+
+.skull-overlay {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; z-index: 0;
+    opacity: 0.3;
+}
+
+.skull-overlay img { width: 70%; height: 70%; object-fit: contain; }
