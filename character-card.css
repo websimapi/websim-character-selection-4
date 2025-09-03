@@ -270,20 +270,31 @@
     transform: scale(1.1);
 }
 
-.character-slot.empty .character-image-wrapper {
+.character-slot.empty .character-image-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
     background: url('/skull.png') center/contain no-repeat;
     opacity: 0.3;
+    z-index: 0;
+    animation-duration: 0.5s;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+}
+
+.character-slot.empty .character-image-wrapper.slide-out-to-left::before {
+    animation-name: slideOutLeft;
+}
+
+.character-slot.empty .character-image-wrapper.slide-out-to-right::before {
+    animation-name: slideOutRight;
+}
+
+.character-slot.empty .character-image-wrapper {
+    background: none;
+    opacity: 1;
 }
 
 .character-slot.empty .character-image {
     opacity: 0;
-}
-
-.character-slot.empty .select-character-text {
-    opacity: 0.5;
-}
-
-.skull-flyout {
-    position: absolute; inset: 0; object-fit: contain; object-position: center;
-    width: 100%; height: 100%; opacity: 0.35; pointer-events: none;
 }

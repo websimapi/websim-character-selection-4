@@ -281,17 +281,12 @@ function hostSwitchToSlot(targetIndex) {
     current.occupied = false; current.playerId = null;
     mySlotIndex = targetIndex;
     broadcastToClients({ type: 'player_slots_update', playerSlots });
-    updateCharacterSlotsUI();
-    const prevEl = document.querySelector(`.character-slot[data-player="${prevIndex + 1}"]`);
-    if (prevEl) {
-        prevEl.classList.add('empty');
-        const wrap = prevEl.querySelector('.character-image-wrapper');
-        wrap && wrap.querySelectorAll('.character-image').forEach(img => { if (img.dataset.blobUrl) URL.revokeObjectURL(img.dataset.blobUrl); img.remove(); });
-    }
+    updateCharacterSlotsUI(); // This will handle making the old slot visually empty
+    
     const targetEl = document.querySelector(`.character-slot[data-player="${targetIndex + 1}"]`);
     if (targetEl) {
-        targetEl.classList.remove('empty');
-        updateCharacterSlot(targetEl, characters[target.characterIndex], 'right');
+        const direction = targetIndex > prevIndex ? 'right' : 'left';
+        updateCharacterSlot(targetEl, characters[target.characterIndex], direction);
     }
     applyMobileSingleSlotMode();
 }
