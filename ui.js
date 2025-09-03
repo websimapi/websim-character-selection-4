@@ -7,6 +7,14 @@ function initializeCharacterSelection() {
         const slotData = playerSlots[index];
         if (!slotData.occupied) {
             slot.classList.add('empty');
+            // ensure skull overlay exists for empty slots on load
+            if (!slot.querySelector('.skull-overlay')) {
+                const wrap = slot.querySelector('.character-image-wrapper');
+                const skull = document.createElement('div');
+                skull.className = 'skull-overlay';
+                skull.innerHTML = '<img src="/skull.png" alt="Empty Slot">';
+                wrap.appendChild(skull);
+            }
         }
 
         // Initial gender setup for archer
@@ -112,15 +120,10 @@ function updateMobileSlotPicker() {
 }
 
 function canControlSlot(slotIndex) {
-    // Host can only control their slot (index 0).
-    // Clients can only control their assigned slot.
+    // Host can control any slot; clients only their assigned slot.
     const slotData = playerSlots[slotIndex];
-
-    if (isHost) {
-        return slotIndex === 0;
-    } else {
-        return slotData.occupied && slotData.playerId === peerId;
-    }
+    if (isHost) return true;
+    return slotData.occupied && slotData.playerId === peerId;
 }
 
 // Set up the start overlay

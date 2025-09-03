@@ -84,14 +84,7 @@ function updateCharacterSlot(slot, character, direction) {
 
     // Animate old image out (guard if none)
     if (oldImage) {
-        const finePointer = window.matchMedia('(pointer: fine)').matches;
-        if (finePointer) {
-            oldImage.style.visibility = 'hidden';
-            const skull = document.createElement('img');
-            skull.src = '/skull.png'; skull.alt = '';
-            skull.className = 'skull-placeholder ' + (direction === 'right' ? 'slide-out-to-left' : 'slide-out-to-right');
-            imageWrapper.appendChild(skull);
-        } else if (direction === 'fade') {
+        if (direction === 'fade') {
             oldImage.style.transition = `opacity ${ANIMATION_DURATION}ms ease-in-out`;
             oldImage.style.opacity = '0';
             newImage.style.transition = `opacity ${ANIMATION_DURATION}ms ease-in-out`;
@@ -113,8 +106,6 @@ function updateCharacterSlot(slot, character, direction) {
         if (oldImage && oldImage.dataset.blobUrl) {
             URL.revokeObjectURL(oldImage.dataset.blobUrl);
         }
-        const skullEl = imageWrapper.querySelector('.skull-placeholder');
-        if (skullEl) skullEl.remove();
         if (oldImage) oldImage.remove();
         newImage.classList.remove('slide-in-from-left', 'slide-in-from-right');
         newImage.style.opacity = '';
