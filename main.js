@@ -311,12 +311,13 @@ function hostSwitchToSlot(targetIndex) {
         const twrap = targetEl.querySelector('.character-image-wrapper');
         if (twrap) twrap.querySelectorAll('.character-image').forEach(img => { if (img.dataset.blobUrl) URL.revokeObjectURL(img.dataset.blobUrl); img.remove(); });
         const skull = targetEl.querySelector('.skull-overlay');
-        targetEl.classList.remove('empty');
         if (skull) {
             skull.classList.add('slide-out-to-left');
-            setTimeout(() => { skull.remove(); }, 500);
+            setTimeout(() => { skull.remove(); targetEl.classList.remove('empty'); updateCharacterSlot(targetEl, characters[target.characterIndex], 'right'); }, 500);
+        } else {
+            targetEl.classList.remove('empty');
+            updateCharacterSlot(targetEl, characters[target.characterIndex], 'right');
         }
-        updateCharacterSlot(targetEl, characters[target.characterIndex], 'right');
     }
     applyMobileSingleSlotMode();
 }

@@ -11,13 +11,6 @@
     animation: slideInFromRight 0.5s forwards ease-in-out;
 }
 
-.skull-overlay.slide-out-to-left {
-    animation: slideOutLeft 0.5s forwards ease-in-out;
-}
-.skull-overlay.slide-out-to-right {
-    animation: slideOutRight 0.5s forwards ease-in-out;
-}
-
 @keyframes slideOutLeft {
     to { transform: translateX(-100%); }
 }
@@ -43,3 +36,4 @@
   50%  { transform: translate(-50%, calc(-50% + 3px)) rotate(180deg); filter: drop-shadow(0 0 22px rgba(102,199,255,1)); }
   100% { transform: translate(-50%, calc(-50% + 3px)) rotate(360deg); filter: drop-shadow(0 0 14px rgba(102,199,255,0.98)); }
 }
+
